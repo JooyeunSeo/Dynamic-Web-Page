@@ -6,15 +6,24 @@ def str_to_morse(string):
         'S': '...', 'T': '-', 'U': '..-', 'V': '...-', 'W': '.--', 'X': '-..-',
         'Y': '-.--', 'Z': '--..',
         '1': '.----', '2': '..---', '3': '...--', '4': '....-', '5': '.....',
-        '6': '-....', '7': '--...', '8': '---..', '9': '----.', '0': '-----',
-        ' ': ' ', '\n': '<br>'
+        '6': '-....', '7': '--...', '8': '---..', '9': '----.', '0': '-----'
     }
     converted_letters = []
-    warning_message = ""
+    forbidden_letters = []
 
-    for letter in string.upper():
-        if letter in chart.keys():
-            converted_letters.append(chart[letter])
+    for line in string.upper().splitlines():
+        words = line.split()
+        for word in words:
+            for letter in word:
+                if letter in chart.keys():
+                    converted_letters.append(f"{chart[letter]} ")
+                else:
+                    forbidden_letters.append(letter)
+            converted_letters.append("  ")
+        converted_letters.append("<br>")
 
     morse_code = "".join(converted_letters)
-    return morse_code + "<br>" + warning_message
+    deleted_letters = " ".join(forbidden_letters)
+    if deleted_letters != "":
+        return morse_code + "\n" + f"⚠️ {deleted_letters} is(are) deleted."
+    return morse_code
