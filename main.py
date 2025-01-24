@@ -45,9 +45,9 @@ def contact():
         msg["From"] = data["email"]                                          # 보내는 사람의 이메일
         msg["To"] = MY_EMAIL                                                 # 받는 사람(나)의 이메일
         msg["Subject"] = "Message from portfolio website\n\n"                # 이메일 제목 설정
-        email_body = (f"Name: {data["name"]}\n"                              # 이메일 본문
-                      f"Email: {data["email"]}\n"
-                      f"Message:\n{data["message"]}")
+        email_body = (f"Name: {data['name']}\n"                              # 이메일 본문
+                      f"Email: {data['emai']}\n"
+                      f"Message:\n{data['message']}")
         msg.attach(MIMEText(email_body, 'plain', 'utf-8'))  # 본문에 한글 인코딩 추가
 
         with smtplib.SMTP("smtp.gmail.com") as connection:              # 이메일 제공자의 SMTP 이메일 서버에 연결
