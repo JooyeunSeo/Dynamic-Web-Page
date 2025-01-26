@@ -1,35 +1,43 @@
 {% include "layout_header.html" %}
 
 					<div id="main">
-						<div class="inner">
-							<h1>Morse Code Converter</h1>
-                               <form method="post" id="morse">
-                                 <div class="fields">
-                                   <div class="field half">
-                                     <label for="string">String:</label>
-                                     <textarea name="string" id="string" spellcheck="false" inputmode="text"
-                                               placeholder="Characters other than alphabets and numbers will be ignored"
-                                               required>{{ user_input or '' }}
-									 </textarea><br>
-                                     <button type="button" class="button small" onclick="resetForm()">Reset</button>
-                                     <button type="submit" class="button primary small">Convert</button>
-                                   </div>
-                                   <div class="field half">
-                                     <label>Morse Code:</label>
-                                     <pre>{% if result is not none %}{{ result | safe }}{% endif %}</pre>
-                                   </div>
-                                 </div>
-                               </form>
-							   <!-- 초기값이 변경된 상태에서도 reset 버튼으로 모두 폼 양식을 지우도록 변경 -->
-							   <script>
-                                 function resetForm() {
-                                   document.querySelector('form').reset();
-                                   document.getElementById('string').value = '';
-                                 }
-                               </script>
+					  <div class="inner">
+						<h1>Morse Code Converter</h1>
+                        <form method="post" id="morse">
+                          <div class="fields">
+                            <div class="field half">
+                              <label for="string">String:</label>
+                              <textarea name="string" id="string" spellcheck="false" inputmode="text"
+                                        placeholder="Characters other than alphabets and numbers will be ignored"
+                                        required>{{ user_input or '' }}
+							  </textarea><br>
+                              <button type="button" class="button small" onclick="resetForm()">Reset</button>
+                              <button type="submit" class="button primary small">Convert</button>
+                            </div>
+                            <div class="field half">
+                              <label>Morse Code:</label>
+                              <pre>{% if result is not none %}{{ result | safe }}{% endif %}</pre>
+                            </div>
+                          </div>
+                        </form>
 
+                        <div>
+                          <h2>Check the codes</h2>
+                          <p>
+                              <a href="https://github.com/JooyeunSeo/Dynamic-Web-Page/blob/main/project_morse_code.py" target="_blank">☑ Function</a><br>
+                              <a href="https://github.com/JooyeunSeo/Dynamic-Web-Page/blob/main/templates/project_morse_code.html" target="_blank">☑ HTML template</a><br>
+                              <a href="https://github.com/JooyeunSeo/Dynamic-Web-Page/blob/main/main.py" target="_blank">☑ Flask server file</a><br>
+                          </p>
+                        </div>
 
-						</div>
+						<!-- 초기값이 변경된 상태에서도 reset 버튼으로 모두 폼 양식을 지우도록 변경 -->
+						<script>
+                          function resetForm() {
+                            document.querySelector('form').reset();
+                            document.getElementById('string').value = '';
+                          }
+                        </script>
+					  </div>
 					</div>
 
 {% include "layout_footer.html" %}
