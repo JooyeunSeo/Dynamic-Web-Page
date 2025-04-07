@@ -1,0 +1,70 @@
+{% extends 'base.html' %}
+{% block title %}{{ cafes|length }} Cafes ☕️ in {{ selected_city }}{% endblock %}
+
+{% block content %}
+<div id="main">
+  <div class="inner">
+	<h1 style="text-align: center; margin-top: 3%;">💻 Laptop Friendly Cafes ☕️ in {{ selected_city }}</h1>
+      <p style="text-align: center;">
+        Log in to add a new cafe to the list or leave comments.<br>
+        If the cafe has closed or contains incorrect information, please click the report button to let me know.
+      </p>
+    <section>
+      <ul class="actions" style="justify-content: center; margin-bottom: 5%;">
+          <li>
+            <form action="{{ url_for('laptop_friendly_cafes_home') }}" method="get">
+              <select name="city" onchange="this.form.submit()">  <!-- 드롭다운 목록에서 선택하면 바로 서버로 제출 -->
+                <option disabled {% if selected_city not in cities %}selected{% endif %}>Select a city</option>
+                {% for city in cities %}
+                  <option value="{{ city }}" {% if city == selected_city %}selected{% endif %} style="text-align: center;">{{ city }}</option>
+                {% endfor %}
+              </select>
+            </form>
+          </li>
+          <li><a href="{{ url_for('laptop_friendly_cafes_add') }}" class="button primary icon solid fa-plus">Add cafe</a></li>
+          <li><a href="{{ url_for('contact') }}" class="button icon solid fa-flag">Report</a></li>
+      </ul>
+      {% if cafes|length == 0 %}
+        <p>Nothing here yet. Feel free to share your information 😉</p>
+      {% else %}
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>CAFE</th>
+              <th>INFO</th>
+              <th>SOCKET</th>
+              <th>TOILET</th>
+              <th>Wi-Fi</th>
+              <th>SEATS</th>
+              <th>AMERICANO</th>
+            </tr>
+          </thead>
+            <tbody>
+              {% for cafe in cafes %}
+                <tr>
+                  <td>
+                    <img src="{{ cafe.img_url }}"
+                         style="min-width: 120px; min-height: 110px; max-width: 150px; max-height: 140px; width: 100%; height: 100%; object-fit: cover; object-position: center; vertical-align: top;">
+                  </td>
+                  <td>
+                    <b>{{ cafe.name }}</b><br>
+                    <a href="{{ cafe.map_url }}" target="_blank">📍 {{ cafe.location }}</a><br>
+                    📞 {{ cafe.phone_number }}<br>
+                    <a href="{{ url_for('laptop_friendly_cafes_show', cafe_id=cafe.id) }}">💬 {{ cafe.comments|length }} comments</a>
+                  </td>
+                  <td>{% if cafe.has_sockets %}<p>🔌</p>{% else %}<p>✘</p>{% endif %}</td>
+                  <td>{% if cafe.has_toilet %}<p>🚽</p>{% else %}<p>✘</p>{% endif %}</td>
+                  <td>{% if cafe.has_wifi %}<p>🛜</p>{% else %}<p>✘</p>{% endif %}</td>
+                  <td>{{ cafe.seats }}</td>
+                  <td>{{ cafe.coffee_price }}</td>
+                </tr>
+              {% endfor %}
+            </tbody>
+            {% endif %}
+        </table>
+      </div>
+    </section>
+  </div>
+</div>
+{% endblock %}

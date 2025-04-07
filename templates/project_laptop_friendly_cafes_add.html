@@ -1,0 +1,48 @@
+{% extends 'base.html' %}
+{% block title %}Add a new Cafe{% endblock %}
+
+{% block content %}
+<div id="main">
+  <div class="inner">
+	{% if not current_user.is_authenticated: %}
+    <h1 style="text-align: center; margin-top: 3%;">Log in to use the Service</h1>
+    <p style="text-align: center;" >Please Log in or make account first to use this service.<br>This is just for simple testing, so no personal information is required when you create new account.</p>
+	<ul class="actions" style="justify-content: center;">
+	  <li><a href="{{ url_for('login') }}" class="button primary">Go to Login Page</a></li>
+	  <li><a href="{{ url_for('register') }}" class="button">Go to make account</a></li>
+	</ul>
+	{% else %}
+	<h1 style="text-align: center; margin-top: 3%;">Add a new Cafe ☕️</h1>
+	<form method="post" action="{{ url_for('laptop_friendly_cafes_add') }}">
+	  <div class="fields">
+	    <div class="field quarter"><label>Name: <input type="text" name="name" placeholder="cafe's name" required /></label><br></div>
+	    <div class="field quarter"><label>City: <input type="text" name="city" placeholder="only name of the city(e.g., Seoul)" required /></label><br></div>
+	    <div class="field quarter"><label>Address: <input type="text" name="location" placeholder="full address" required /></label><br></div>
+	    <div class="field quarter"><label>Phone Number: <input type="text" name="phone_number" placeholder="skip if no phone number exist" /></label><br></div>
+	    <div class="field half">
+	  	  <label>Map URL: <input type="text" name="map_url" placeholder="enter the shared link from a map application(e.g., Google maps)" required /></label><br>
+	  	  <label>Image URL: <input type="text" name="img_url" placeholder="copy the image address and paste it" required /></label><br>
+	    </div>
+	    <div class="field quarter">
+	  	  <label>Number of seats: <input type="text" name="seats" placeholder="a rough estimate is fine" required /></label><br>
+	  	  <label>Price of a basic Americano: <input type="text" name="coffee_price" placeholder="write with currency sign(e.g., ₩3.5)" required /></label><br>
+	    </div>
+	    <div class="field quarter">
+	  	  <label>Facility Availability: </label>
+	  	  <input type="checkbox" name="has_sockets" id="has_sockets">
+          <label for="has_sockets">Socket 🔌</label><br>
+	  	  <input type="checkbox" name="has_toilet" id="has_toilet">
+          <label for="has_toilet">Toilet 🚽</label><br>
+	  	  <input type="checkbox" name="has_wifi" id="has_wifi">
+          <label for="has_wifi">Wi-Fi 🛜</label><br>
+	    </div>
+	  </div>
+	  <ul class="actions" style="justify-content: center;">
+		  <li><input type="reset" value="Clear" /></li>						<!-- 작성 내용 삭제 -->
+		  <li><input type="submit" value="Submit" class="primary" /></li>	<!-- 작성 내용 제출 -->
+	  </ul>
+  </form>
+  {% endif %}
+  </div>
+</div>
+{% endblock %}

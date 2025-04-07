@@ -1,0 +1,32 @@
+{% extends 'base.html' %}
+{% block title %}Log In page{% endblock %}
+
+{% block content %}
+<div id="main">
+  <div class="inner">
+	<h1>Log In page</h1>
+    <p>Please log in with your account here.<br></p>
+	  <!-- 플래시 메시지 -->
+	  {% with messages = get_flashed_messages() %}
+		{% if messages %}
+		  {% for message in messages %}
+			<p style="color: red;">{{ message }}</p>
+		  {% endfor %}
+		{% endif %}
+	  {% endwith %}
+
+	  <form method="post" action="{{ url_for('login') }}">
+		  <div class="fields">
+			<!-- user email -->
+			<div class="field half"><input type="email" name="email" id="email" placeholder="Email" required /></div>
+			<div class="field half"><br></div>
+			<!-- user password -->
+			<div class="field half"><input type="password" name="password" id="password" placeholder="Password" required /></div>
+		  </div>
+		  <ul class="actions">
+			<li><input type="submit" value="Log in" class="primary" /></li>
+		  </ul>
+	</form>
+  </div>
+</div>
+{% endblock %}

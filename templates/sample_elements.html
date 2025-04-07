@@ -1,5 +1,7 @@
-{% include "layout_header.html" %}
+{% extends 'base.html' %}
+{% block title %}사용 가능한 기능{% endblock %}
 
+{% block content %}
 				<!-- Main -->
 					<div id="main">
 						<div class="inner">
@@ -315,5 +317,4 @@ print 'It took ' + i + ' iterations to sort the deck.';</code></pre>
 
 						</div>
 					</div>
-
-{% include "layout_footer.html" %}
+{% endblock %}

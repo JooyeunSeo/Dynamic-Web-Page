@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+{% block title %}Register page{% endblock %}
+
+{% block content %}
+<div id="main">
+  <div class="inner">
+	<h1>Register page</h1>
+    <p>If you’d like to test any of my projects that require login, please create an account here first.<br>
+	   This is just for simple testing—I do not collect any personal information. You don’t need to provide a real name or email."
+	</p>
+
+	  <form method="post" action="{{ url_for('register') }}">
+		  <div class="fields">
+			<!-- user name -->
+			<div class="field half"><input type="text" name="name" id="name" placeholder="Name" required /></div>
+            <div class="field half"><br></div>
+			<!-- user email -->
+			<div class="field half"><input type="email" name="email" id="email" placeholder="Email" required /></div>
+            <div class="field half"><br></div>
+			<!-- user password -->
+			<div class="field half"><input type="password" name="password" id="password" placeholder="Password" required /></div>
+		  </div>
+		  <ul class="actions">
+			<li><input type="submit" value="Sign Up" class="primary" /></li>
+		  </ul>
+	</form>
+  </div>
+</div>
+{% endblock %}

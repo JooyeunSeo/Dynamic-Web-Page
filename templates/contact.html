@@ -1,36 +1,36 @@
-{% include "layout_header.html" %}
+{% extends 'base.html' %}
+{% block title %}Contact{% endblock %}
 
-					<div id="main">
-						<div class="inner">
-							{% if msg_sent: %}
-							  <h1>Successfully sent your message!</h1>
-							{% else: %}
-							  <h1>Get in touch</h1>
-							{% endif %}
-                            <form method="post" action="{{ url_for('contact') }}">
-                              <div class="fields">
+{% block content %}
+<div id="main">
+	<div class="inner">
+		{% if msg_sent: %}
+		  <h1>Successfully sent your message!</h1>
+		{% else: %}
+		  <h1>Email me!</h1>
+		{% endif %}
+		<form method="post" action="{{ url_for('contact') }}">
+		  <div class="fields">
+			<!-- 이름 -->
+			<div class="field half">
+			  <input type="text" name="name" id="name" placeholder="Name" />
+			</div>
 
-								<!-- 이름 -->
-                                <div class="field half">
-								  <input type="text" name="name" id="name" placeholder="Name" />
-								</div>
+			<!-- 이메일 주소 -->
+			<div class="field half">
+			  <input type="email" name="email" id="email" placeholder="Email" />
+			</div>
 
-								<!-- 이메일 주소 -->
-								<div class="field half">
-								  <input type="email" name="email" id="email" placeholder="Email" />
-								</div>
+			<!-- 메시지 -->
+			<div class="field">
+			  <textarea name="message" id="message" placeholder="Message"></textarea>
+			</div>
 
-								<!-- 메시지 -->
-								<div class="field">
-								  <textarea name="message" id="message" placeholder="Message"></textarea>
-								</div>
-
-							  </div>
-                              <ul class="actions">
-							    <li><input type="submit" value="Send" class="primary" /></li>
-							  </ul>
-                            </form>
-						</div>
-					</div>
-
-{% include "layout_footer.html" %}
+		  </div>
+		  <ul class="actions">
+			<li><input type="submit" value="Send" class="primary" /></li>
+		  </ul>
+		</form>
+	</div>
+</div>
+{% endblock %}

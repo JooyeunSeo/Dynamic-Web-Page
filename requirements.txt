@@ -1,2 +1,8 @@
 Flask
 gunicorn
+bootstrap-flask
+SQLAlchemy
+flask_sqlalchemy
+psycopg2-binary
+Werkzeug
+Flask_Login

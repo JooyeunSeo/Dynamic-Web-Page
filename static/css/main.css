@@ -2705,28 +2705,32 @@ input, select, textarea {
 						margin-bottom: 0;
 					}
 
-			.tiles article.style1 > .image:before {
+			.tiles article.style1 > .image:before {     /* pink */
 				background-color: #f2849e;
 			}
 
-			.tiles article.style2 > .image:before {
+			.tiles article.style2 > .image:before {     /* skyblue */
 				background-color: #7ecaf6;
 			}
 
-			.tiles article.style3 > .image:before {
+			.tiles article.style3 > .image:before {     /* green */
 				background-color: #7bd0c1;
 			}
 
-			.tiles article.style4 > .image:before {
+			.tiles article.style4 > .image:before {     /* violet */
 				background-color: #c75b9b;
 			}
 
-			.tiles article.style5 > .image:before {
+			.tiles article.style5 > .image:before {     /* purple */
 				background-color: #ae85ca;
 			}
 
-			.tiles article.style6 > .image:before {
+			.tiles article.style6 > .image:before {     /* blue */
 				background-color: #8499e7;
+			}
+
+            .tiles article.style7 > .image:before {     /* blue */
+				background-color: #976841;
 			}
 
 			body:not(.is-touch) .tiles article:hover > .image {
