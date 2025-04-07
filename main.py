@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, flash, send_from_directory, abort
+from flask import Flask, render_template, request, redirect, url_for, flash, abort
 # render_template: templates 폴더 안의 html 파일을 렌더링
 # request: Flask에서 HTTP 요청(GET, POST 등)에 대한 정보를 다루는 데 사용
 # redirect: 사용자가 요청한 페이지를 다른 페이지로 리디렉션
@@ -27,7 +27,7 @@ MY_EMAIL = os.environ.get("MY_EMAIL")
 GMAIL_PASSWORD = os.environ.get("GMAIL_PASSWORD")
 
 app = Flask(__name__)
-app.config['SECRET_KEY'] = os.environ.get('FLASK_KEY', 'asdfg1235cdwetAEEs32tj421D94JasdASDRg22')  #SQLAlchemy 설정 코드
+app.config['SECRET_KEY'] = os.environ.get('FLASK_KEY')  #SQLAlchemy 설정 코드
 Bootstrap5(app)
 
 #--------------------------------------
@@ -354,5 +354,5 @@ def laptop_friendly_cafes_delete_cafe(cafe_id):
 ## git에 commit할 때:  app.run(debug=False)
 ## local에서 실행할 때:  app.run(debug=True, host="127.0.0.1", port=5000) → 포트 에러 시 5001
 if __name__ == "__main__":
-    # app.run(debug=False)
-    app.run(debug=True, host="127.0.0.1", port=5000)
+    app.run(debug=False)
+    # app.run(debug=True, host="127.0.0.1", port=5000)
