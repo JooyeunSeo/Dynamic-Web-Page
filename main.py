@@ -14,7 +14,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 #--------------------------------------
 import os
 from datetime import date
-from functools import wraps                         # 데코레이터 생성 시 원래 함수의 메타데이터 유지
+# from functools import wraps                         # 데코레이터 생성 시 원래 함수의 메타데이터 유지
 import smtplib                                      # 파이썬 코드로 이메일을 전송하는 모듈
 from email.mime.multipart import MIMEMultipart      # 이메일의 본문과 제목 관리
 from email.mime.text import MIMEText                # UTF-8로 이메일의 본문 인코딩
@@ -38,22 +38,11 @@ login_manager.init_app(app)         # Flask 애플리케이션에 LoginManager�
 def load_user(user_id):
     return User.query.get(int(user_id))
 
-# create an admin-only decorator
-def admin_only(f):
-    @wraps(f)
-    def decorated_function(*args, **kwargs):
-        # ff id is not 1 then return abort with 403 error
-        if current_user.id != 1:
-            return abort(403)
-        # otherwise continue with the route function
-        return f(*args, **kwargs)
-    return decorated_function
-
 #--------------------------------------
 class Base(DeclarativeBase):
     pass
 
-app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get("DB_URI", "sqlite:///users.db")
+app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get("DB_URI", "sqlite:///users.db")  # 환경변수 DB_URI
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False    # 객체 상태 변화 추적 비활성화(메모리 절약)
 db = SQLAlchemy(model_class=Base)
 db.init_app(app)
@@ -352,7 +341,7 @@ def laptop_friendly_cafes_delete_cafe(cafe_id):
 
 # Local server -------------------------------------
 ## git에 commit할 때:  app.run(debug=False)
-## local에서 실행할 때:  app.run(debug=True, host="127.0.0.1", port=5000) → 포트 에러 시 5001
+## local에서 실행할 때:  app.run(debug=True, host="127.0.0.1", port=5000) → 403 에러 시 5001로 변경
 if __name__ == "__main__":
     app.run(debug=False)
-    # app.run(debug=True, host="127.0.0.1", port=5000)
+    # app.run(debug=True, host="127.0.0.1", port=5001)
