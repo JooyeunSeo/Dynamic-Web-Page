@@ -88,11 +88,6 @@ class CafeComment(db.Model):
 with app.app_context():
     db.create_all()
 
-    # # 이미 존재하는 db 테이블들
-    # all_users = db.session.query(User).all()
-    # all_cafes = db.session.query(Cafe).all()
-
-
 # home page --------------------------------------------------------------------------------------------
 @app.route("/", methods=['GET', 'POST'])
 def home():
@@ -289,7 +284,7 @@ def laptop_friendly_cafes_show(cafe_id):
 @login_required
 def laptop_friendly_cafes_delete_comment(comment_id):     # 댓글 삭제
     comment = CafeComment.query.get_or_404(comment_id)
-    if comment.comment_author.id != current_user.id or current_user.id != 1:
+    if comment.comment_author.id != current_user.id and current_user.id != 1:
         abort(403)
     db.session.delete(comment)
     db.session.commit()
@@ -300,8 +295,7 @@ def laptop_friendly_cafes_delete_comment(comment_id):     # 댓글 삭제
 @login_required
 def laptop_friendly_cafes_edit(cafe_id):
     cafe = Cafe.query.get_or_404(cafe_id)
-
-    if cafe.author != current_user or current_user.id != 1:    # 권한 없는 사람이 접근하면 Forbidden 에러 반환
+    if cafe.author != current_user and current_user.id != 1:    # 권한 없는 사람이 접근하면 Forbidden 에러 반환
         abort(403)
 
     if request.method == 'POST':
@@ -326,7 +320,7 @@ def laptop_friendly_cafes_edit(cafe_id):
 @login_required
 def laptop_friendly_cafes_delete_cafe(cafe_id):
     cafe = Cafe.query.get_or_404(cafe_id)
-    if cafe.author != current_user or current_user.id != 1:
+    if cafe.author != current_user and current_user.id != 1:
         abort(403)
     db.session.delete(cafe)
     db.session.commit()
