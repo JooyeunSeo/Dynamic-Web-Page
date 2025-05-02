@@ -13,7 +13,9 @@
 	</ul>
 	{% else %}
 	<h1 style="text-align: center; margin-top: 3%;">Add a new Cafe ☕️</h1>
+
 	<form method="post" action="{{ url_for('laptop_friendly_cafes_add') }}">
+	  <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
 	  <div class="fields">
 	    <div class="field quarter"><label>Name: <input type="text" name="name" placeholder="cafe's name" required /></label><br></div>
 	    <div class="field quarter"><label>City: <input type="text" name="city" placeholder="only name of the city(e.g., Seoul)" required /></label><br></div>
@@ -37,6 +39,7 @@
           <label for="has_wifi">Wi-Fi 🛜</label><br>
 	    </div>
 	  </div>
+
 	  <ul class="actions" style="justify-content: center;">
 		  <li><input type="reset" value="Clear" /></li>						<!-- 작성 내용 삭제 -->
 		  <li><input type="submit" value="Submit" class="primary" /></li>	<!-- 작성 내용 제출 -->

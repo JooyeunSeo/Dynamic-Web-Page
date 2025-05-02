@@ -10,6 +10,7 @@
 		  <h1>Email me!</h1>
 		{% endif %}
 		<form method="post" action="{{ url_for('contact') }}">
+		  <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
 		  <div class="fields">
 			<!-- 이름 -->
 			<div class="field half">
