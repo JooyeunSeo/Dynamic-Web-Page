@@ -6,7 +6,7 @@
 -->
 <html>
 	<head>
-		<title>{% block title %}Portfolios by Yon{% endblock %}</title>     <!-- 자식 페이지에서 탭 이름 동적 설정 -->
+		<title>{% block title %}Yon's Portfolio{% endblock %}</title>     <!-- 자식 페이지에서 탭 이름 동적 설정 -->
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
 		<link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}" />
@@ -16,7 +16,7 @@
 		<!-- Wrapper -->
 			<div id="wrapper">
 
-				<!-- Header -->
+				<!------------------------- Header ------------------------->
 					<header id="header">
 						<div class="inner">
 
@@ -62,7 +62,7 @@
                 {% endblock %}
 
 
-				<!-- Footer -->
+				<!-------------------------- Footer -------------------------->
 					<footer id="footer">
 						<div class="inner">
 
@@ -83,7 +83,7 @@
 					</footer>
 			</div>
 
-		<!-- Scripts -->
+		<!----------- Scripts ------------>
 			<script src="{{ url_for('static', filename='js/jquery.min.js') }}"></script>
 			<script src="{{ url_for('static', filename='js/browser.min.js') }}"></script>
 			<script src="{{ url_for('static', filename='js/breakpoints.min.js') }}"></script>

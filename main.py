@@ -100,7 +100,7 @@ class Task(db.Model):
     tasker = db.relationship('User', back_populates='tasks')                  # User(부모) 테이블과 관계 설정
     text = db.Column(db.String(500), nullable=False)
     is_done = db.Column(db.Boolean, default=False)
-    add_date = db.Column(db.DateTime, default=datetime.now)
+    # add_date = db.Column(db.DateTime, default=datetime.now)
     due_date = db.Column(db.DateTime, nullable=True)
     order = db.Column(db.Integer, default=0)    # 리스트 정렬 순서 저장
 
