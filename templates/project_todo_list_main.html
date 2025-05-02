@@ -1,0 +1,301 @@
+{% extends 'base.html' %}
+{% block title %}
+  {% if current_user.is_authenticated %}
+    {{ current_user.name }}'s to-do list ({{ now.strftime('%Y-%m-%d') }})
+  {% else %}
+    Make your own to-do list
+  {% endif %}
+{% endblock %}
+
+{% block content %}
+<div id="main">
+  <div class="inner">
+    <!-- 제목 -->
+    {% if current_user.is_authenticated %}
+	  <h1>{{ current_user.name }}'s to-do list</h1>
+    {% else %}
+      <h1>Make your own to-do list!</h1>
+    {% endif %}
+
+    <!------------------------- task 추가 ------------------------->
+    {% if current_user.is_authenticated %}
+      <h2>
+        Todo: {{ pending_tasks|length }} &nbsp;|&nbsp;
+        Completed: {{ completed_tasks|length }} &nbsp;|&nbsp;
+        Overdue: {{ overdue_tasks|length }}
+     </h2>
+
+        <form method="POST" class="row g-3">
+            {{ form.hidden_tag() }}
+            <!-- 할 일 입력 -->
+            <div class="col-md-6">
+                {{ form.text(class="form-control", rows="2") }}
+            </div>
+            <!-- 기한 설정 -->
+            <div class="col-md-3">
+                {{ form.due_date(class="form-control form-control-sm", style="border-radius: 5px; padding: 1px;", placeholder="YYYY-MM-DD HH:MM") }}
+            </div>
+            <!-- 제출 버튼 -->
+            <div class="col-md-1">
+                {{ form.submit(class="button small") }}
+            </div>
+        </form>
+    {% else %}
+      <a href="{{ url_for('login') }}">Go to Log in</a>
+    {% endif %}
+
+
+    <!----------------------- 진행 중인 task 리스트 ----------------------->
+    {% if current_user.is_authenticated %}
+        {% if pending_tasks %}
+            <div id="task-list">
+              {% for task in pending_tasks %}
+                <div class="task-item d-flex align-items-center mb-2" data-id="{{ task.id }}">
+                  <!-- 메뉴버튼 -->
+                  <span class="handle me-2" style="cursor: move;">☰</span>
+
+                  <!-- 체크아이콘 -->
+                  <span role="button" onclick="toggleIsDone({{ task.id }})" style="cursor: pointer; font-size: 1.2rem; margin-right: 0.5rem;" title="change statement">
+                    {% if task.is_done %}▣
+                    {% else %}□
+                    {% endif %}
+                  </span>
+
+                  <!-- 텍스트 + 마감일 -->
+                  <div style="flex: 1 1 auto; min-width: 0;">
+                    <!-- 텍스트 (클릭 시 수정 가능) -->
+                    <span class="task-text" onclick="editTaskText({{ task.id }})" id="task-text-{{ task.id }}" style="overflow-wrap: break-word; margin-right: 0.9rem;">
+                    {{ task.text }}
+                    </span>
+
+                    <!-- 숨겨진 폼(텍스트 수정) -->
+                    <form method="POST"
+                          action="{{ url_for('todo_list_update_text', task_id=task.id) }}"
+                          class="edit-text-form d-inline"
+                          id="edit-form-{{ task.id }}"
+                          style="display: none;"
+                          onsubmit="return true;">
+                    {{ form.csrf_token }}
+                    <input type="text"
+                           name="text"
+                           value="{{ task.text }}"
+                           class="form-control form-control-sm d-inline"
+                           style="width: auto; max-width: 300px;"
+                           onblur="this.form.submit()">
+                    </form>
+
+                    <!-- 마감일 -->
+                    <span class="due-date-display" onclick="editDueDate({{ task.id }})">
+                      <code class="text-muted ms-2" style="font-size: 0.8rem; vertical-align: middle;">
+                        {% if task.due_date %}
+                          {{ task.due_date.strftime('%Y-%m-%d(%a), %H:%M') }}
+                        {% else %}
+                          No Due Date
+                        {% endif %}
+                      </code>
+                    </span>
+
+                    <!-- 숨겨진 폼 (수정용 datetime picker) -->
+                    <form method="POST"
+                          action="{{ url_for('todo_list_update_due_date', task_id=task.id) }}"
+                          class="d-inline due-date-form"
+                          style="display: none;"
+                          onsubmit="return true;">
+                      {{ form.csrf_token }}
+                     <input type="datetime-local"
+                           name="due_date"
+                           value="{{ task.due_date.strftime('%Y-%m-%dT%H:%M') if task.due_date else '' }}"
+                           class="form-control form-control-sm d-inline align-middle"
+                           style="width: 200px; height: 1.5em; line-height: 2.0em; font-size: 1.0rem; padding: 0 4px; vertical-align: middle;"
+                           onchange="this.form.submit()">
+                    </form>
+                  </div>
+
+                  <!-- 삭제 아이콘 -->
+                  <span role="button" class="ms-2 text-danger" onclick="deleteTask({{ task.id }})" style="cursor: pointer; ">✘</span>
+                </div>
+              {% endfor %}
+            </div>
+         {% endif %}
+    {% endif %}
+
+
+    <!---------------------------- 완료한 task 리스트 ---------------------------->
+    {% if current_user.is_authenticated %}
+        {% if completed_tasks %}
+            <div class="completed-task-list">
+              {% for task in completed_tasks %}
+                <div class="task-item d-flex align-items-center justify-content-between mb-2" data-id="{{ task.id }}">
+
+                  <!-- 왼쪽: 체크아이콘 + 텍스트 -->
+                  <div class="d-flex align-items-center flex-wrap" style="flex: 1 1 auto; min-width: 0;">
+                    <span role="button" onclick="toggleIsDone({{ task.id }})"
+                          style="cursor: pointer; font-size: 1.2rem; margin-left: 1.6rem; margin-right: 0.5rem; color: #999;"
+                          title="change statement">
+                      {% if task.is_done %}▣
+                      {% else %}□
+                      {% endif %}
+                    </span>
+
+                    <span class="ms-2 text-truncate" style="margin-right: 0.5rem; color: #999; max-width: 100%;">
+                      <del>{{ task.text }}</del>
+                    </span>
+                  </div>
+
+                  <!-- 오른쪽: 삭제 아이콘 -->
+                  <span role="button" class="ms-2 text-danger" onclick="deleteTask({{ task.id }})"
+                        style="cursor: pointer; color: #999;">✘</span>
+                </div>
+              {% endfor %}
+            </div>
+        {% endif %}
+    {% endif %}
+
+
+    <!--------------------------- 기한 지난 task 리스트 --------------------------->
+    {% if current_user.is_authenticated %}
+        {% if overdue_tasks %}
+            <div class="overdue-task-list">
+              {% for task in overdue_tasks %}
+                <div class="task-item d-flex align-items-center justify-content-between mb-2" data-id="{{ task.id }}">
+
+                  <!-- 왼쪽: 아이콘 + 텍스트 -->
+                  <div class="d-flex align-items-center flex-wrap" style="flex: 1 1 auto; min-width: 0;">
+                    <!-- 아이콘 (disabled) -->
+                    <span style="cursor: not-allowed; font-size: 1.2rem; margin-left: 1.5rem; margin-right: 0.5rem;" title="statement fix">🚨</span>
+
+                    <!-- 내용 및 마감일 -->
+                    <span class="ms-2 text-danger text-truncate" style="margin-right: 0.5rem; color: #f00; max-width: 100%;">
+                      {{ task.text }} [Due by {{ task.due_date.strftime('%Y-%m-%d(%a), %H:%M') }}]
+                    </span>
+                  </div>
+
+                  <!-- 오른쪽: 삭제 아이콘 -->
+                  <span role="button" class="ms-2 text-danger" onclick="deleteTask({{ task.id }})"
+                        style="cursor: pointer; color: #f00;">✘︎</span>
+                </div>
+              {% endfor %}
+            </div>
+       {% endif %}
+    {% endif %}
+  </div>
+</div>
+
+<style>
+  .task-item {
+    display: flex;
+    align-items: center;
+    padding: 6px 10px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    background-color: #fdfdfd;
+  }
+
+  .handle {
+    cursor: move;
+    margin-right: 10px;
+    font-size: 18px;
+  }
+
+  .form-check-input {
+    margin-right: 10px;
+    margin-top: 0;
+    cursor: pointer;
+  }
+
+  .task-item span {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  code {
+    background-color: #f1f1f1;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-family: monospace;
+    font-size: 0.85rem;
+  }
+
+  input[type="datetime-local"] {
+    border: 2px solid #4e4e4e;
+    border-radius: 5px;
+    padding: 1px;
+    color: #333;
+    cursor: pointer;
+  }
+
+  input[type="datetime-local"]:focus {
+    border-color: #ef7993;
+    outline: none; /* 파란 테두리 제거 */
+  }
+</style>
+
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>  <!-- SortableJS -->
+<script>
+  new Sortable(document.getElementById('task-list'), {
+    handle: '.handle',
+    animation: 150,
+    onEnd: function (evt) {
+      const order = [...document.querySelectorAll('#task-list .task-item')].map(item => item.dataset.id);
+      fetch("{{ url_for('todo_list_reorder_tasks') }}", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRFToken": "{{ csrf_token }}"
+        },
+        body: JSON.stringify({ order })
+      });
+    }
+  });
+</script>
+<script>
+  function editDueDate(taskId) {
+    const display = document.querySelector(`[onclick="editDueDate(${taskId})"]`);
+    const form = display.nextElementSibling;
+    display.style.display = 'none';
+    form.style.display = 'inline';
+  }
+
+  function editTaskText(taskId) {
+    const textSpan = document.getElementById(`task-text-${taskId}`);
+    const form = document.getElementById(`edit-form-${taskId}`);
+    textSpan.style.display = 'none';
+    form.style.display = 'inline';
+
+    const input = form.querySelector('input');
+    input.focus();
+    input.setSelectionRange(input.value.length, input.value.length);
+  }
+
+  function toggleIsDone(taskId) {
+    fetch(`/todo_list/toggle_done/${taskId}`, {
+      method: "POST",
+      headers: {
+        "X-CSRFToken": "{{ csrf_token }}",
+      }
+    }).then(() => location.reload());
+  }
+
+  function deleteTask(taskId) {
+    if (!confirm("Do you really want to delete this task?")) return;
+    fetch(`/todo_list/delete/${taskId}`, {
+      method: "POST",
+      headers: {
+        "X-CSRFToken": "{{ csrf_token }}",  // CSRF 토큰 추가
+      }
+    }).then(response => {
+      if (response.ok) {
+        // 삭제된 항목을 DOM에서 제거
+        const taskItem = document.querySelector(`[data-id="${taskId}"]`);
+        if (taskItem) {
+          taskItem.remove();  // 해당 task를 DOM에서 제거
+        }
+      } else {
+        alert("failed to delete!");
+      }
+    });
+  }
+</script>
+
+{% endblock %}

@@ -8,8 +8,8 @@
 		  <p>Click each tile to see the detail of program!<br>To create a new account or log in, click the 𑁔 menu button at the top right.<br></p>
 		</header>
 		<section class="tiles">
-		  <!-- 1번째 타일 -->
-		  <article class="style2">
+		  <!-- 1번째 타일 (모스 코드 변환기) -->
+		  <article class="style1">
 			<span class="image">
 			  <img src="https://www.worldhistory.org/img/r/p/1500x1500/17222.png.webp?v=1679479979-1679480090" alt="" />
 			</span>
@@ -20,8 +20,8 @@
 			  </div>
 			</a>
 		  </article>
-		  <!-- 2번째 타일 -->
-		  <article class="style7">
+		  <!-- 2번째 타일 (원격 근무 카페 정보) -->
+		  <article class="style2">
 			<span class="image">
 			  <img src="https://images.unsplash.com/photo-1581387490232-2181c3736353?q=80&w=2940&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D" alt="" />
 			</span>
@@ -32,8 +32,18 @@
 			  </div>
 			</a>
 		  </article>
-
-
+		  <!-- 3번째 타일 (투두 리스트) -->
+          <article class="style3">
+			<span class="image">
+			  <img src="https://cdn.pixabay.com/photo/2021/03/28/13/02/lists-6131220_1280.jpg" alt="" />
+			</span>
+			<a href="{{ url_for('todo_list_home') }}">
+			  <h2>To-do List</h2>
+			  <div class="content">
+				<p>Make your own to-do list.<br>Add tasks, complete them, and check them off before they’re due.</p>
+			  </div>
+			</a>
+		  </article>
 		</section>
 	</div>
 </div>

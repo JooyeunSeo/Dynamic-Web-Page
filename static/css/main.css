@@ -2205,7 +2205,7 @@ input, select, textarea {
 
 	textarea {
 		padding: 0;
-		min-height: 3.75em;
+		min-height: 2.00em;     /* default: 3.75em */
 	}
 
 	input[type="checkbox"],
@@ -2709,12 +2709,12 @@ input, select, textarea {
 				background-color: #f2849e;
 			}
 
-			.tiles article.style2 > .image:before {     /* skyblue */
-				background-color: #7ecaf6;
+			.tiles article.style2 > .image:before {     /* brown */
+				background-color: #ab7d57;
 			}
 
-			.tiles article.style3 > .image:before {     /* green */
-				background-color: #7bd0c1;
+			.tiles article.style3 > .image:before {     /* yellow */
+				background-color: #fae978;
 			}
 
 			.tiles article.style4 > .image:before {     /* violet */
@@ -2729,8 +2729,8 @@ input, select, textarea {
 				background-color: #8499e7;
 			}
 
-            .tiles article.style7 > .image:before {     /* blue */
-				background-color: #976841;
+            .tiles article.style7 > .image:before {     /* skyblue */
+				background-color: #7ecaf6;
 			}
 
 			body:not(.is-touch) .tiles article:hover > .image {

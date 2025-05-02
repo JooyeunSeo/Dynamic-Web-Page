@@ -9,19 +9,32 @@
 	   This is just for simple testing—I do not collect any personal information. You don’t need to provide a real name or email."
 	</p>
 
-	  <form method="post" action="{{ url_for('register') }}">
+	  <form method="post" action="{{ url_for('register') }}" novalidate>
+		  {{ form.hidden_tag() }}
 		  <div class="fields">
 			<!-- user name -->
-			<div class="field half"><input type="text" name="name" id="name" placeholder="Name" required /></div>
+			<div class="field half">
+				{{ form.name.label }}
+                {{ form.name(size=32) }}
+				{% for error in form.name.errors %}<p style="color:red;">{{ error }}</p>{% endfor %}
+			</div>
             <div class="field half"><br></div>
 			<!-- user email -->
-			<div class="field half"><input type="email" name="email" id="email" placeholder="Email" required /></div>
+			<div class="field half">
+				{{ form.email.label }}
+                {{ form.email(size=32) }}
+				{% for error in form.email.errors %}<p style="color:red;">{{ error }}</p>{% endfor %}
+			</div>
             <div class="field half"><br></div>
 			<!-- user password -->
-			<div class="field half"><input type="password" name="password" id="password" placeholder="Password" required /></div>
+			<div class="field half">
+				{{ form.password.label }}
+                {{ form.password(size=32) }}
+				{% for error in form.password.errors %}<p style="color:red;">{{ error }}</p>{% endfor %}
+			</div>
 		  </div>
 		  <ul class="actions">
-			<li><input type="submit" value="Sign Up" class="primary" /></li>
+			<li>{{ form.submit(class="primary") }}</li>
 		  </ul>
 	</form>
   </div>

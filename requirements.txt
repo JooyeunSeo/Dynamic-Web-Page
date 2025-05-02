@@ -1,6 +1,9 @@
 Flask
 gunicorn
 bootstrap-flask
+Flask-WTF
+wtforms
+email-validator
 SQLAlchemy
 flask_sqlalchemy
 psycopg2-binary
