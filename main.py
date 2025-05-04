@@ -1,9 +1,10 @@
-from flask import Flask, render_template, request, redirect, url_for, flash, abort, jsonify
+from flask import Flask, render_template, request, redirect, url_for, flash, abort, jsonify, session
 # render_template: templates 폴더 안의 html 파일을 렌더링
 # request: Flask에서 HTTP 요청(GET, POST 등)에 대한 정보를 다루는 데 사용
 # redirect: 사용자가 요청한 페이지를 다른 페이지로 리디렉션
 # url_for: url 생성
 # jsonify: Python의 dict, list 등을 JSON 형식으로 변환해서 반환
+# session:
 #--------------------------------------
 from flask_bootstrap import Bootstrap5
 from forms import RegisterForm, LoginForm, TaskForm
@@ -19,6 +20,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 #--------------------------------------
 import os
 from datetime import datetime, date
+import pytz
 # from functools import wraps                         # 데코레이터 생성 시 원래 함수의 메타데이터 유지
 import smtplib                                      # 파이썬 코드로 이메일을 전송하는 모듈
 from email.mime.multipart import MIMEMultipart      # 이메일의 본문과 제목 관리
@@ -341,10 +343,41 @@ def laptop_friendly_cafes_delete_cafe(cafe_id):
     return redirect(url_for('laptop_friendly_cafes_home', selected_city=cafe.city, city=cafe.city))
 
 ###############################################################################################################
+@app.route('/set_timezone', methods=["POST"])
+def set_timezone():
+    data = request.get_json()  # 클라이언트에서 보낸 JSON 데이터 받기
+    user_timezone = data.get('timezone')  # 사용자의 시간대
+    local_time = data.get('local_time')  # 사용자의 로컬 시간
+
+    # 세션에 사용자 시간대 저장
+    session['timezone'] = user_timezone
+
+    # 로컬 시간 문자열을 datetime 객체로 변환
+    local_dt = datetime.fromisoformat(local_time)  # 로컬 시간을 datetime 객체로 변환
+    local_tz = pytz.timezone(user_timezone)  # 사용자의 시간대
+    localized_dt = local_tz.localize(local_dt)  # 로컬 시간대에 맞게 시간대 정보 추가
+
+    # 로컬 시간 저장
+    session['local_time'] = localized_dt
+
+    return '', 200  # 빈 응답
+
+
+
 @app.route('/todo_list', methods=["GET", "POST"])
 def todo_list_home():
     task_form = TaskForm()
-    now = datetime.now()
+    # 서버시간과 로컬시간 다른 문제 해결하기(now = datetime.now()는 서버시간 기준이어서 사용불가)
+    user_timezone = session.get('timezone')
+    local_time = session.get('local_time')
+
+    # 사용자의 시간대가 없다면, 현재 UTC 시간 사용
+    if not user_timezone or not local_time:
+        now = datetime.utcnow().replace(tzinfo=pytz.utc)
+    else:
+        # 세션에서 가져온 시간대로 시간 변환
+        local_tz = pytz.timezone(user_timezone)
+        now = local_time.astimezone(local_tz)  # 사용자의 로컬 시간대로 변환
 
     if current_user.is_authenticated and task_form.validate_on_submit():
         new_task = Task(
@@ -359,9 +392,11 @@ def todo_list_home():
 
     if current_user.is_authenticated:
         user_tasks = Task.query.filter_by(tasker_id=current_user.id).order_by(Task.order).all()
-        pending_tasks = [t for t in user_tasks if not t.is_done and (t.due_date is None or t.due_date >= now)]
+        # pending_tasks = [t for t in user_tasks if not t.is_done and (t.due_date is None or t.due_date >= now)]
+        pending_tasks = [t for t in user_tasks if not t.is_done and (t.due_date is None or t.due_date.replace(tzinfo=None) >= now.replace(tzinfo=None))]
         completed_tasks = [t for t in user_tasks if t.is_done]
-        overdue_tasks = [t for t in user_tasks if not t.is_done and t.due_date and t.due_date < now]
+        # overdue_tasks = [t for t in user_tasks if not t.is_done and t.due_date and t.due_date < now]
+        overdue_tasks = [t for t in user_tasks if not t.is_done and t.due_date and t.due_date.replace(tzinfo=None) < now.replace(tzinfo=None)]
     else:
         pending_tasks = []
         completed_tasks = []

@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 {% block title %}
   {% if current_user.is_authenticated %}
-    {{ current_user.name }}'s to-do list ({{ now.strftime('%Y-%m-%d') }})
+    {{ current_user.name }}'s to-do list
   {% else %}
     Make your own to-do list
   {% endif %}
@@ -23,7 +23,7 @@
         Todo: {{ pending_tasks|length }} &nbsp;|&nbsp;
         Completed: {{ completed_tasks|length }} &nbsp;|&nbsp;
         Overdue: {{ overdue_tasks|length }}
-     </h2>
+      </h2>
 
         <form method="POST" class="row g-3">
             {{ form.hidden_tag() }}
@@ -313,5 +313,26 @@ function updateTaskCounts() {
   h2.innerHTML = `Todo: ${pending} &nbsp;|&nbsp; Completed: ${completed} &nbsp;|&nbsp; Overdue: ${overdue}`;
 }
 </script>
+
+{% if 'timezone' not in session %}
+<script type="text/javascript">
+  // 클라이언트의 시간대와 로컬 시간 가져오기
+  const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;  // 사용자의 시간대
+  const localTime = new Date().toISOString();  // 로컬 시간 (ISO 형식)
+
+  // 서버로 POST 요청 보내기
+  fetch("/set_timezone", {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ timezone: timezone, local_time: localTime })  // JSON 형식으로 데이터 전송
+  }).then(response => {
+    if (response.ok) {
+      console.log("Timezone and local time saved in session.");
+    }
+  });
+</script>
+{% endif %}
 
 {% endblock %}
