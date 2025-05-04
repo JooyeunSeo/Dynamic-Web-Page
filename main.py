@@ -350,7 +350,6 @@ def todo_list_home():
         new_task = Task(
             text=task_form.text.data,
             is_done=False,
-            add_date = now,
             due_date=task_form.due_date.data,
             tasker=current_user
         )
