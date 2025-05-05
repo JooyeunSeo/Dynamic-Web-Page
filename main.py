@@ -4,7 +4,7 @@ from flask import Flask, render_template, request, redirect, url_for, flash, abo
 # redirect: 사용자가 요청한 페이지를 다른 페이지로 리디렉션
 # url_for: url 생성
 # jsonify: Python의 dict, list 등을 JSON 형식으로 변환해서 반환
-# session:
+# session: 세션 데이터(임시 저장 정보) 관리
 #--------------------------------------
 from flask_bootstrap import Bootstrap5
 from forms import RegisterForm, LoginForm, TaskForm
@@ -21,7 +21,6 @@ from werkzeug.security import generate_password_hash, check_password_hash
 import os
 from datetime import datetime, date
 from zoneinfo import ZoneInfo
-import pytz
 # from functools import wraps                         # 데코레이터 생성 시 원래 함수의 메타데이터 유지
 import smtplib                                      # 파이썬 코드로 이메일을 전송하는 모듈
 from email.mime.multipart import MIMEMultipart      # 이메일의 본문과 제목 관리
@@ -469,8 +468,6 @@ def todo_list_delete(task_id):
 
 
 # Local server -------------------------------------
-# ☁️ git에 commit할 때:  app.run(debug=False)
-# 💻 local에서 실행할 때:  app.run(debug=True, host="127.0.0.1", port=5000) → 403 에러 시 5001로 변경
 if __name__ == "__main__":
-    app.run(debug=False)
-    # app.run(debug=True, host="127.0.0.1", port=5001)
+    app.run(debug=False)                                # ☁️ git에 commit할 때
+    # app.run(debug=True, host="127.0.0.1", port=5001)    # 💻 local에서 실행할 때 → 403 에러 시 포트 5000에서 5001로 변경
