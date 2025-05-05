@@ -387,7 +387,10 @@ def todo_list_home():
         # 각 task의 due_date를 로컬 시간으로 변환
         for task in user_tasks:
             if task.due_date:
-                task.due_date = task.due_date.astimezone(user_tz)
+                task.local_due_date = task.due_date.astimezone(user_tz)
+            else:
+                task.local_due_date = None
+
         # 현재 시간 (사용자 시간대 기준)
         now = datetime.now(user_tz)
         # 리스트 생성
@@ -422,9 +425,17 @@ def todo_list_update_due_date(task_id):
     if task.tasker != current_user:
         abort(403)
 
+    # 세션에서 사용자 시간대 가져오기
+    user_tz_name = session.get('timezone', 'UTC')
+    user_tz = ZoneInfo(user_tz_name)
+
     new_due = request.form.get('due_date')
     if new_due:
-        task.due_date = datetime.fromisoformat(new_due)
+        # naive datetime으로 들어오므로, 사용자 시간대로 간주해 tz 부여
+        naive_due = datetime.fromisoformat(new_due)
+        localized_due = naive_due.replace(tzinfo=user_tz)
+        # UTC로 변환해 저장
+        task.due_date = localized_due.astimezone(ZoneInfo("UTC"))
     else:
         task.due_date = None  # "기한 없음"으로 처리
 

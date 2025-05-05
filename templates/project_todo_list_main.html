@@ -91,7 +91,7 @@
                     <span class="due-date-display" onclick="editDueDate({{ task.id }})">
                       <code class="text-muted ms-2" style="font-size: 0.8rem; vertical-align: middle;">
                         {% if task.due_date %}
-                          {{ task.due_date.strftime('%Y-%m-%d(%a), %H:%M') }}
+                          {{ task.local_due_date.strftime('%Y-%m-%d(%a), %H:%M') }}
                         {% else %}
                           No Due Date
                         {% endif %}
@@ -107,7 +107,7 @@
                       {{ form.csrf_token }}
                      <input type="datetime-local"
                            name="due_date"
-                           value="{{ task.due_date.strftime('%Y-%m-%dT%H:%M') if task.due_date else '' }}"
+                           value="{{ task.local_due_date.strftime('%Y-%m-%dT%H:%M') if task.local_due_date else '' }}"
                            class="form-control form-control-sm d-inline align-middle"
                            style="width: 200px; height: 1.5em; line-height: 2.0em; font-size: 1.0rem; padding: 0 4px; vertical-align: middle;"
                            onchange="this.form.submit()">
@@ -168,7 +168,7 @@
 
                     <!-- 내용 및 마감일 -->
                     <span class="ms-2 text-danger text-truncate" style="margin-right: 0.5rem; color: #f00; max-width: 100%;">
-                      {{ task.text }} [Due by {{ task.due_date.strftime('%Y-%m-%d(%a), %H:%M') }}]
+                      {{ task.text }} [Due by {{ task.local_due_date.strftime('%Y-%m-%d(%a), %H:%M') }}]
                     </span>
                   </div>
 
