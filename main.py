@@ -393,10 +393,10 @@ def todo_list_home():
 
         # 현재 시간 (사용자 시간대 기준)
         now = datetime.now(user_tz)
-        # 리스트 생성
-        pending_tasks = [t for t in user_tasks if not t.is_done and (t.due_date is None or t.due_date >= now)]
+        # 리스트 생성 (로컬 시간 기준으로 필터링)
+        pending_tasks = [t for t in user_tasks if not t.is_done and (t.local_due_date is None or t.local_due_date >= now)]
         completed_tasks = [t for t in user_tasks if t.is_done]
-        overdue_tasks = [t for t in user_tasks if not t.is_done and t.due_date and t.due_date < now]
+        overdue_tasks = [t for t in user_tasks if not t.is_done and t.local_due_date and t.local_due_date < now]
     else:
         now = None
         pending_tasks = []
@@ -480,5 +480,5 @@ def todo_list_delete(task_id):
 
 # Server -------------------------------------
 if __name__ == "__main__":
-    app.run(debug=False)                                # ☁️ git에 commit할 때
-    # app.run(debug=True, host="127.0.0.1", port=5001)    # 💻 local에서 실행할 때 → 403 에러 시 포트 5000에서 5001로 변경
+    # app.run(debug=False)                                # ☁️ git에 commit할 때
+    app.run(debug=True, host="127.0.0.1", port=5001)    # 💻 local에서 실행할 때 → 403 에러 시 포트 5000에서 5001로 변경
