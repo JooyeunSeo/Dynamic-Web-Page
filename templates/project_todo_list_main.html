@@ -13,7 +13,6 @@
     <!-- 제목 -->
     {% if current_user.is_authenticated %}
 	  <h1>{{ current_user.name }}'s to-do list</h1>
-<!--      <p>현재 시간대: {{ session.get('timezone') }}</p>-->
     {% else %}
       <h1>Make your own to-do list!</h1>
     {% endif %}

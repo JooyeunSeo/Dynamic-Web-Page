@@ -356,21 +356,19 @@ def laptop_friendly_cafes_delete_cafe(cafe_id):
 def todo_list_home():
     task_form = TaskForm()
 
-    # 세션에서 시간대 정보 가져오기
-    user_tz_name = session.get('timezone', 'UTC')  # 시간대 없으면 기본 UTC
-    print("세션에 저장된 시간대:", session.get('timezone'))
-    user_tz = ZoneInfo(user_tz_name)  # zoneinfo 사용하여 시간대 객체 생성
+    print("세션에 저장된 시간대 확인:", session.get('timezone'))  # 사용자 시간대 확인용
+    user_tz_name = session.get('timezone', 'UTC')           # 세션에서 시간대 정보 가져와서 저장(없으면 기본 UTC)
+    user_tz = ZoneInfo(user_tz_name)                        # zoneinfo 사용하여 시간대 객체 생성
 
     if current_user.is_authenticated and task_form.validate_on_submit():
         due_date = task_form.due_date.data
         if due_date:
-            # naive datetime을 aware datetime으로 변환
-            if due_date.tzinfo is None:  # naive datetime인지 확인
-                due_date = due_date.replace(tzinfo=user_tz)  # 사용자 시간대에 맞춰 시간대 정보 추가
-            # UTC로 변환
-            utc_due_date = due_date.astimezone(ZoneInfo("UTC"))
+            # 브라우저에서 보낸 datetime은 naive한 로컬 시간으로 들어오므로 실제로는 user_tz 기준이라고 간주하여 시간대 지정
+            localized_due_date = due_date.replace(tzinfo=user_tz)
+            # 이후 UTC로 변환해 저장
+            utc_due_date = localized_due_date.astimezone(ZoneInfo("UTC"))
         else:
-            utc_due_date = None
+            utc_due_date = None     # 마감일 없는 할 일
 
         new_task = Task(
             text=task_form.text.data,
@@ -382,7 +380,7 @@ def todo_list_home():
         db.session.commit()
         return redirect(url_for('todo_list_home'))
 
-
+    # GET 요청
     if current_user.is_authenticated:
         user_tasks = Task.query.filter_by(tasker_id=current_user.id).order_by(Task.order).all()
 
@@ -392,13 +390,12 @@ def todo_list_home():
                 task.due_date = task.due_date.astimezone(user_tz)
         # 현재 시간 (사용자 시간대 기준)
         now = datetime.now(user_tz)
-
+        # 리스트 생성
         pending_tasks = [t for t in user_tasks if not t.is_done and (t.due_date is None or t.due_date >= now)]
         completed_tasks = [t for t in user_tasks if t.is_done]
         overdue_tasks = [t for t in user_tasks if not t.is_done and t.due_date and t.due_date < now]
     else:
         now = None
-
         pending_tasks = []
         completed_tasks = []
         overdue_tasks = []
