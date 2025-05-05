@@ -11,6 +11,16 @@
 		<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
 		<link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}" />
 		<noscript><link rel="stylesheet" href="{{ url_for('static', filename='css/noscript.css') }}" /></noscript>
+		{% if 'timezone' not in session %}
+          <script type="text/javascript">	// 사용자의 시간대를 가져와 서버에 보내기
+            const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+            fetch("/set_timezone", {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ timezone: timezone })
+            });
+          </script>
+        {% endif %}
 	</head>
 	<body class="is-preload">
 		<!-- Wrapper -->
@@ -19,7 +29,6 @@
 				<!------------------------- Header ------------------------->
 					<header id="header">
 						<div class="inner">
-
 							<!-- Logo -->
 								<a href="{{ url_for('home') }}" class="logo">
 									<span class="symbol"><img src="{{ url_for('static', filename='images/logo.png') }}" alt="" /></span>
@@ -32,7 +41,6 @@
 										<li><a href="#menu">Menu</a></li>
 									</ul>
 								</nav>
-
 						</div>
 					</header>
 

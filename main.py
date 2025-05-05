@@ -20,6 +20,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 #--------------------------------------
 import os
 from datetime import datetime, date
+from zoneinfo import ZoneInfo
 import pytz
 # from functools import wraps                         # 데코레이터 생성 시 원래 함수의 메타데이터 유지
 import smtplib                                      # 파이썬 코드로 이메일을 전송하는 모듈
@@ -204,6 +205,13 @@ def contact():
     # 양식을 입력하고 이메일을 전송한 후에는 POST 요청
     return render_template("contact.html", csrf_token=generate_csrf(), msg_sent=False)
 
+# timezone --------------------------------------
+@app.route('/set_timezone', methods=["POST"])
+def set_timezone():
+    data = request.get_json()
+    user_timezone = data.get('timezone', 'UTC')  # 시간대 없으면 기본 UTC
+    session['timezone'] = user_timezone  # 세션에 저장
+    return '', 200  # 빈 응답
 
 # sample pages --------------------------------------
 @app.route("/sample")  # 샘플 페이지
@@ -343,47 +351,30 @@ def laptop_friendly_cafes_delete_cafe(cafe_id):
     return redirect(url_for('laptop_friendly_cafes_home', selected_city=cafe.city, city=cafe.city))
 
 ###############################################################################################################
-@app.route('/set_timezone', methods=["POST"])
-def set_timezone():
-    data = request.get_json()  # 클라이언트에서 보낸 JSON 데이터 받기
-    user_timezone = data.get('timezone')  # 사용자의 시간대
-    local_time = data.get('local_time')  # 사용자의 로컬 시간
-
-    # 세션에 사용자 시간대 저장
-    session['timezone'] = user_timezone
-
-    # 로컬 시간 문자열을 datetime 객체로 변환
-    local_dt = datetime.fromisoformat(local_time)  # 로컬 시간을 datetime 객체로 변환
-    local_tz = pytz.timezone(user_timezone)  # 사용자의 시간대
-    localized_dt = local_tz.localize(local_dt)  # 로컬 시간대에 맞게 시간대 정보 추가
-
-    # 로컬 시간 저장
-    session['local_time'] = localized_dt
-
-    return '', 200  # 빈 응답
-
-
-
 @app.route('/todo_list', methods=["GET", "POST"])
 def todo_list_home():
     task_form = TaskForm()
-    # 서버시간과 로컬시간 다른 문제 해결하기(now = datetime.now()는 서버시간 기준이어서 사용불가)
-    user_timezone = session.get('timezone')
-    local_time = session.get('local_time')
-
-    # 사용자의 시간대가 없다면, 현재 UTC 시간 사용
-    if not user_timezone or not local_time:
-        now = datetime.utcnow().replace(tzinfo=pytz.utc)
-    else:
-        # 세션에서 가져온 시간대로 시간 변환
-        local_tz = pytz.timezone(user_timezone)
-        now = local_time.astimezone(local_tz)  # 사용자의 로컬 시간대로 변환
 
     if current_user.is_authenticated and task_form.validate_on_submit():
+        due_date = task_form.due_date.data
+        if due_date:
+            # 세션에서 시간대 정보 가져오기
+            user_tz_name = session.get('timezone', 'UTC')  # 시간대 없으면 기본 UTC
+            user_tz = ZoneInfo(user_tz_name)  # zoneinfo 사용하여 시간대 객체 생성
+
+            # naive datetime을 aware datetime으로 변환
+            if due_date.tzinfo is None:  # naive datetime인지 확인
+                due_date = due_date.replace(tzinfo=user_tz)  # 사용자 시간대에 맞춰 시간대 정보 추가
+
+            # UTC로 변환
+            utc_due_date = due_date.astimezone(ZoneInfo("UTC"))
+        else:
+            utc_due_date = None
+
         new_task = Task(
             text=task_form.text.data,
             is_done=False,
-            due_date=task_form.due_date.data,
+            due_date=utc_due_date,
             tasker=current_user
         )
         db.session.add(new_task)
@@ -392,11 +383,19 @@ def todo_list_home():
 
     if current_user.is_authenticated:
         user_tasks = Task.query.filter_by(tasker_id=current_user.id).order_by(Task.order).all()
-        # pending_tasks = [t for t in user_tasks if not t.is_done and (t.due_date is None or t.due_date >= now)]
-        pending_tasks = [t for t in user_tasks if not t.is_done and (t.due_date is None or t.due_date.replace(tzinfo=None) >= now.replace(tzinfo=None))]
+
+        user_tz_name = session.get('timezone', 'UTC')
+        user_tz = ZoneInfo(user_tz_name)
+        # 각 task의 due_date를 로컬 시간으로 변환
+        for task in user_tasks:
+            if task.due_date:
+                task.due_date = task.due_date.astimezone(user_tz)
+        # 현재 시간 (사용자 시간대 기준)
+        now = datetime.now(user_tz)
+
+        pending_tasks = [t for t in user_tasks if not t.is_done and (t.due_date is None or t.due_date >= now)]
         completed_tasks = [t for t in user_tasks if t.is_done]
-        # overdue_tasks = [t for t in user_tasks if not t.is_done and t.due_date and t.due_date < now]
-        overdue_tasks = [t for t in user_tasks if not t.is_done and t.due_date and t.due_date.replace(tzinfo=None) < now.replace(tzinfo=None)]
+        overdue_tasks = [t for t in user_tasks if not t.is_done and t.due_date and t.due_date < now]
     else:
         pending_tasks = []
         completed_tasks = []

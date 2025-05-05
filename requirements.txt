@@ -9,4 +9,3 @@ flask_sqlalchemy
 psycopg2-binary
 Werkzeug
 Flask_Login
-pytz
