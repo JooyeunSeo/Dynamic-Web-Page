@@ -13,6 +13,7 @@
     <!-- 제목 -->
     {% if current_user.is_authenticated %}
 	  <h1>{{ current_user.name }}'s to-do list</h1>
+<!--      <p>현재 시간대: {{ session.get('timezone') }}</p>-->
     {% else %}
       <h1>Make your own to-do list!</h1>
     {% endif %}
@@ -41,9 +42,12 @@
             </div>
         </form>
     {% else %}
-      <a href="{{ url_for('login') }}">Go to Log in</a>
+      <p>
+        Go to <b><a href="{{ url_for('login') }}">Log in</a></b> or
+        <b><a href="{{ url_for('register') }}">make account</a></b> to use the service.
+        <br><br>
+      </p>
     {% endif %}
-
 
     <!----------------------- 진행 중인 task 리스트 ----------------------->
     {% if current_user.is_authenticated %}
@@ -243,7 +247,7 @@ new Sortable(document.getElementById('task-list'), {
         "Content-Type": "application/json",
         "X-CSRFToken": "{{ csrf_token }}"
       },
-      body: <JSON class="stringify"> order </JSON>              // 새 순서 서버로 전송
+      body: JSON.stringify(order)              // 새 순서 서버로 전송
     });
   }
 });

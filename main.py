@@ -109,6 +109,16 @@ class Task(db.Model):
 with app.app_context():
     db.create_all()
 
+# timezone --------------------------------------
+@app.route('/set_timezone', methods=["POST"])
+def set_timezone():
+    data = request.get_json()
+    timezone = data.get("timezone")
+    if timezone:
+        session['timezone'] = timezone
+        return jsonify({"message": "Timezone set"}), 200
+    return jsonify({"error": "No timezone provided"}), 400
+
 # home page --------------------------------------------------------------------------------------------
 @app.route("/", methods=["GET", "POST"])
 def home():
@@ -203,14 +213,6 @@ def contact():
 
     # 양식을 입력하고 이메일을 전송한 후에는 POST 요청
     return render_template("contact.html", csrf_token=generate_csrf(), msg_sent=False)
-
-# timezone --------------------------------------
-@app.route('/set_timezone', methods=["POST"])
-def set_timezone():
-    data = request.get_json()
-    user_timezone = data.get('timezone', 'UTC')  # 시간대 없으면 기본 UTC
-    session['timezone'] = user_timezone  # 세션에 저장
-    return '', 200  # 빈 응답
 
 # sample pages --------------------------------------
 @app.route("/sample")  # 샘플 페이지
@@ -354,17 +356,17 @@ def laptop_friendly_cafes_delete_cafe(cafe_id):
 def todo_list_home():
     task_form = TaskForm()
 
+    # 세션에서 시간대 정보 가져오기
+    user_tz_name = session.get('timezone', 'UTC')  # 시간대 없으면 기본 UTC
+    print("세션에 저장된 시간대:", session.get('timezone'))
+    user_tz = ZoneInfo(user_tz_name)  # zoneinfo 사용하여 시간대 객체 생성
+
     if current_user.is_authenticated and task_form.validate_on_submit():
         due_date = task_form.due_date.data
         if due_date:
-            # 세션에서 시간대 정보 가져오기
-            user_tz_name = session.get('timezone', 'UTC')  # 시간대 없으면 기본 UTC
-            user_tz = ZoneInfo(user_tz_name)  # zoneinfo 사용하여 시간대 객체 생성
-
             # naive datetime을 aware datetime으로 변환
             if due_date.tzinfo is None:  # naive datetime인지 확인
                 due_date = due_date.replace(tzinfo=user_tz)  # 사용자 시간대에 맞춰 시간대 정보 추가
-
             # UTC로 변환
             utc_due_date = due_date.astimezone(ZoneInfo("UTC"))
         else:
@@ -380,11 +382,10 @@ def todo_list_home():
         db.session.commit()
         return redirect(url_for('todo_list_home'))
 
+
     if current_user.is_authenticated:
         user_tasks = Task.query.filter_by(tasker_id=current_user.id).order_by(Task.order).all()
 
-        user_tz_name = session.get('timezone', 'UTC')
-        user_tz = ZoneInfo(user_tz_name)
         # 각 task의 due_date를 로컬 시간으로 변환
         for task in user_tasks:
             if task.due_date:
@@ -396,6 +397,8 @@ def todo_list_home():
         completed_tasks = [t for t in user_tasks if t.is_done]
         overdue_tasks = [t for t in user_tasks if not t.is_done and t.due_date and t.due_date < now]
     else:
+        now = None
+
         pending_tasks = []
         completed_tasks = []
         overdue_tasks = []
@@ -405,7 +408,7 @@ def todo_list_home():
                            pending_tasks=pending_tasks, completed_tasks=completed_tasks, overdue_tasks=overdue_tasks)
 
 
-@app.route('/todo_list/reorder_tasks', methods=["GET", "POST"])
+@app.route('/todo_list/reorder_tasks', methods=["POST"])
 def todo_list_reorder_tasks():
     order = request.json.get('order', [])
     for idx, task_id in enumerate(order):
@@ -443,7 +446,7 @@ def todo_list_update_text(task_id):
     return redirect(url_for('todo_list_home'))
 
 
-@app.route('/todo_list/toggle_done/<int:task_id>', methods=["GET", "POST"])
+@app.route('/todo_list/toggle_done/<int:task_id>', methods=["POST"])
 def todo_list_toggle_done(task_id):
     task = Task.query.get_or_404(task_id)
     if task.tasker != current_user:
@@ -467,7 +470,7 @@ def todo_list_delete(task_id):
 
 
 
-# Local server -------------------------------------
+# Server -------------------------------------
 if __name__ == "__main__":
     app.run(debug=False)                                # ☁️ git에 commit할 때
     # app.run(debug=True, host="127.0.0.1", port=5001)    # 💻 local에서 실행할 때 → 403 에러 시 포트 5000에서 5001로 변경
