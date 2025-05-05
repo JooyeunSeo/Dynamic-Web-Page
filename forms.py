@@ -3,7 +3,7 @@ from flask_wtf import FlaskForm
 from wtforms import PasswordField, SubmitField, StringField, TextAreaField, DateTimeLocalField, BooleanField
 from wtforms.validators import DataRequired, Optional, Email, Length
 
-
+##############################
 class RegisterForm(FlaskForm):
     name = StringField("Name", validators=[DataRequired(), Length(min=2, max=50, message='Name must be between 2 and 50 characters long.')])
     email = StringField("Email", validators=[DataRequired(), Email(message='Invalid email address')])

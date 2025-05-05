@@ -6,21 +6,11 @@
 -->
 <html>
 	<head>
-		<title>{% block title %}Yon's Portfolio{% endblock %}</title>     <!-- 자식 페이지에서 탭 이름 동적 설정 -->
+		<title>{% block title %}Yon's Portfolio{% endblock %}</title>     <!-- 자식 페이지에서 브라우저 탭 이름 동적 설정 -->
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
 		<link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}" />
 		<noscript><link rel="stylesheet" href="{{ url_for('static', filename='css/noscript.css') }}" /></noscript>
-		{% if 'timezone' not in session %}
-          <script type="text/javascript">	// 사용자의 시간대를 가져와 서버에 보내기
-            const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-            fetch("/set_timezone", {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ timezone: timezone })
-            });
-          </script>
-        {% endif %}
 	</head>
 	<body class="is-preload">
 		<!-- Wrapper -->
@@ -91,12 +81,31 @@
 					</footer>
 			</div>
 
-		<!----------- Scripts ------------>
+		<!-- 시간대 설정용 스크립트 -->
+			<script>
+				document.addEventListener("DOMContentLoaded", function () {
+					const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+
+					if (!sessionStorage.getItem("timezone_sent")) {
+						fetch("/set_timezone", {
+							method: "POST",
+							headers: {
+								"Content-Type": "application/json"
+							},
+							body: JSON.stringify({ timezone: timezone })
+						}).then(() => {
+							sessionStorage.setItem("timezone_sent", "true");
+							location.reload();  // 첫 방문 시 한 번 새로고침
+						});
+					}
+				});
+			</script>
+
+		<!----------- 기타 UI 관련 스크립트 ------------>
 			<script src="{{ url_for('static', filename='js/jquery.min.js') }}"></script>
 			<script src="{{ url_for('static', filename='js/browser.min.js') }}"></script>
 			<script src="{{ url_for('static', filename='js/breakpoints.min.js') }}"></script>
 			<script src="{{ url_for('static', filename='js/util.js') }}"></script>
 			<script src="{{ url_for('static', filename='js/main.js') }}"></script>
-
 	</body>
 </html>

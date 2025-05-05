@@ -3,7 +3,7 @@
   {% if current_user.is_authenticated %}
     {{ current_user.name }}'s to-do list
   {% else %}
-    Make your own to-do list
+    Make your own to-do list!
   {% endif %}
 {% endblock %}
 
@@ -233,28 +233,30 @@ input[type="datetime-local"]:focus {
 <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>  <!-- SortableJS -->
 <script>
 new Sortable(document.getElementById('task-list'), {
-  handle: '.handle',
-  animation: 150,
-  onEnd: function (evt) {
+  handle: '.handle',            // 드래그 가능한 영역 (아이콘 등)
+  animation: 150,               // 드래그 시 애니메이션 속도 (ms)
+  onEnd: function (evt) {       // 순서 변경 후 함수 실행
     const order = [...document.querySelectorAll('#task-list .task-item')].map(item => item.dataset.id);
-    fetch("{{ url_for('todo_list_reorder_tasks') }}", {
+    fetch("{{ url_for('todo_list_reorder_tasks') }}", {          // 순서대로 id 수집
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         "X-CSRFToken": "{{ csrf_token }}"
       },
-      body: JSON.stringify({ order })
+      body: <JSON class="stringify"> order </JSON>              // 새 순서 서버로 전송
     });
   }
 });
-
+</script>
+<script>
 function editDueDate(taskId) {
   const display = document.querySelector(`[onclick="editDueDate(${taskId})"]`);
   const form = display.nextElementSibling;
   display.style.display = 'none';
   form.style.display = 'inline';
 }
-
+</script>
+<script>
 function editTaskText(taskId) {
   const textSpan = document.getElementById(`task-text-${taskId}`);
   const form = document.getElementById(`edit-form-${taskId}`);
@@ -264,7 +266,8 @@ function editTaskText(taskId) {
   input.focus();
   input.setSelectionRange(input.value.length, input.value.length);
 }
-
+</script>
+<script>
 function toggleIsDone(taskId) {
   fetch(`/todo_list/toggle_done/${taskId}`, {
     method: "POST",
@@ -273,7 +276,8 @@ function toggleIsDone(taskId) {
     }
   }).then(() => location.reload());
 }
-
+</script>
+<script>
 function deleteTask(taskId) {
   if (!confirm("Do you really want to delete this task?")) return;
 
@@ -295,7 +299,8 @@ function deleteTask(taskId) {
     }
   });
 }
-
+</script>
+<script>
 function updateTaskCounts() {
   const allTasks = document.querySelectorAll(".task-item");
   let pending = 0, completed = 0, overdue = 0;
