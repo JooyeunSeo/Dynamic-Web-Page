@@ -83,7 +83,7 @@
                            name="text"
                            value="{{ task.text }}"
                            class="form-control form-control-sm d-inline"
-                           style="width: auto; max-width: 300px;"
+                           style="width: 100%; max-width: 300px;"
                            onblur="this.form.submit()">
                     </form>
 
@@ -106,11 +106,12 @@
                           onsubmit="return true;">
                       {{ form.csrf_token }}
                      <input type="datetime-local"
-                           name="due_date"
-                           value="{{ task.local_due_date.strftime('%Y-%m-%dT%H:%M') if task.local_due_date else '' }}"
-                           class="form-control form-control-sm d-inline align-middle"
-                           style="width: 200px; height: 1.5em; line-height: 2.0em; font-size: 1.0rem; padding: 0 4px; vertical-align: middle;"
-                           onchange="this.form.submit()">
+                            name="due_date"
+                            value="{{ task.local_due_date.strftime('%Y-%m-%dT%H:%M') if task.local_due_date else '' }}"
+                            class="form-control form-control-sm d-inline align-middle"
+                            style="width: 100%; max-width: 250px; min-height: 2.4em; font-size: 1rem; padding: 4px 6px;"
+                            onchange="this.form.submit()">
+
                     </form>
                   </div>
 

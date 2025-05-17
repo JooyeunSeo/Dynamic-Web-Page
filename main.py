@@ -356,8 +356,8 @@ def laptop_friendly_cafes_delete_cafe(cafe_id):
 def todo_list_home():
     task_form = TaskForm()
 
-    print("세션에 저장된 시간대 확인:", session.get('timezone'))  # 사용자 시간대 확인용
     user_tz_name = session.get('timezone', 'UTC')           # 세션에서 시간대 정보 가져와서 저장(없으면 기본 UTC)
+    print(f"세션에 저장된 시간대 확인: {user_tz_name}")  # 사용자 시간대 확인용
     user_tz = ZoneInfo(user_tz_name)                        # zoneinfo 사용하여 시간대 객체 생성
 
     if current_user.is_authenticated and task_form.validate_on_submit():
@@ -472,13 +472,17 @@ def todo_list_delete(task_id):
     db.session.delete(task)
     db.session.commit()
     return redirect(url_for('todo_list_home'))
+
 ###############################################################################################################
+@app.route('/write_or_vanish', methods=["GET", "POST"])
+def write_or_vanish():
+    return render_template('project_write_or_vanish.html', csrf_token=generate_csrf())
 
-
+###############################################################################################################
 
 
 
 # Server -------------------------------------
 if __name__ == "__main__":
-    # app.run(debug=False)                                # ☁️ git에 commit할 때
-    app.run(debug=True, host="127.0.0.1", port=5001)    # 💻 local에서 실행할 때 → 403 에러 시 포트 5000에서 5001로 변경
+    app.run(debug=False)                                # ☁️ git에 commit할 때
+    # app.run(debug=True, host="127.0.0.1", port=5001)    # 💻 local에서 실행할 때 → 403 에러 시 포트 5000에서 5001로 변경

@@ -1,0 +1,255 @@
+{% extends 'base.html' %}
+{% block title %}Write or Vanish{% endblock %}
+
+{% block content %}
+<div id="main">
+  <div class="inner">
+	<h1 style="margin-bottom: 1%;">
+      <span>Write</span>
+      <span style="color: gray;">or</span>
+      <span style="color: red;">Vanish</span>
+    </h1>
+    <p>If you stop for more than <b>5 seconds</b>, everything will disappear.</p>
+
+    <!-- 글쓰기 시간 설정 부분 -->
+    <div class="input-row" style="margin-bottom: 20px;">
+      <form method="post" style="width: 100%; display: flex; align-items: center; gap: 10px;">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+
+        <label for="writing_time" style="white-space: nowrap; margin: 0;">Writing Time</label>
+
+        <select id="writing_time" style="width: auto; min-width: 60px; height: 34px;">
+          <option value="10">10 seconds</option>
+          <option value="60">1 minute</option>
+          <option value="180">3 minutes</option>
+          <option value="300">5 minutes</option>
+          <option value="600">10 minutes</option>
+          <option value="900">15 minutes</option>
+          <option value="1800">30 minutes</option>
+        </select>
+
+        <button type="button" class="button primary" id="startBtn" style="margin-top: 5px; height: 34px; line-height: 34px;">Start</button>
+      </form>
+    </div>
+
+    <!-- 시간 진행 표시 바 : 항상 표시, 기본은 흐리게 -->
+    <div id="timeBarContainer">
+      <div id="timeBar"></div>
+    </div>
+
+    <!-- 글쓰기 영역 : 항상 표시하되 기본은 읽기 전용 -->
+    <div id="writingArea" contenteditable="false"></div>
+
+    <!-- 결과 버튼 -->
+    <div id="afterWritingOptions" style="display: none; margin-top: 10px;">
+      <p>☺️ You saved your text!</p>
+      <button id="copyBtn" class="button icon solid" style="margin-right: 15px;"><i class="fas fa-copy"></i> Copy</button>
+      <button id="shareBtn" class="button icon solid"><i class="fas fa-share-alt"></i> Share</button>
+    </div>
+
+    <!-- 재시도 안내 (입력 중단 시에만) -->
+    <div id="retryPrompt" style="display: none; margin-top: 10px; color: #ff0000">
+      <p>😱 Your text has been completely deleted!</p>
+    </div>
+
+  </div>
+</div>
+
+
+<style>
+#timeBarContainer {
+  width:100%;
+  height:10px;
+  border-radius:10px;
+  background:#c2c2c2;
+  margin-bottom:10px;
+  overflow:hidden;
+  opacity:.4;
+}
+
+#timeBarContainer.active {
+  background: #ffe5ec; /* 연한 핑크색 (활성화 시) */
+  opacity: 1;
+}
+
+#timeBar {
+  height:100%;
+  width:0%;
+  background:#ef7993;
+}
+
+#writingArea {
+  width: 100%;
+  height: 200px;
+  border: 2px solid #4e4e4e;
+  border-radius: 5px; /* 둥근 테두리 */
+  padding: 10px;
+  font-size: 1.5rem;
+  overflow: auto;
+  box-sizing: border-box;
+}
+
+#writingArea::-webkit-scrollbar {
+  width: 8px;
+  border-radius: 10px;
+}
+
+#writingArea::-webkit-scrollbar-track {
+  background: transparent;
+  border-radius: 10px;
+}
+
+#writingArea::-webkit-scrollbar-thumb {
+  background-color: rgba(239,121,147,0.3);
+  border-radius: 10px;
+}
+
+#writingArea:focus {
+  outline: none;
+  border-color: #ef7993;
+  box-shadow: 0 0 5px #ef7993;
+}
+
+@keyframes shake {      /* 진동 애니메이션 정의 */
+  0%, 100% { transform: translate(0px, 0px); }
+  25% { transform: translate(2px, 0); }
+  50% { transform: translate(0, 2px); }
+  75% { transform: translate(-2px, 0); }
+}
+
+.shake {              /* 진동 효과 클래스 */
+  animation: shake 0.5s infinite;
+}
+</style>
+
+<script>
+// ===== DOM =====
+const startBtn           = document.getElementById("startBtn");
+const writingArea        = document.getElementById("writingArea");
+const afterWritingOpts   = document.getElementById("afterWritingOptions");
+const retryPrompt        = document.getElementById("retryPrompt");
+const writingTimeSelect  = document.getElementById("writing_time");
+const timeBarContainer   = document.getElementById("timeBarContainer");
+const timeBar            = document.getElementById("timeBar");
+
+// ===== 상태 변수 =====
+let sessionTimer   = null;   // 전체 글쓰기 타이머
+let idleTimer      = null;   // 1초 지연 후 경고 타이머
+let warnInterval   = null;   // 1초마다 색/진동
+let redIntensity   = 0;
+let started        = false;
+let elapsed        = 0;
+let duration       = 0;
+
+// ===== 시작 버튼 =====
+startBtn.onclick = () => {
+  duration = parseInt(writingTimeSelect.value);
+  if (!duration) { alert("Set the writing time."); return; }
+
+  // --- UI/상태 초기화 ---
+  writingArea.innerHTML  = "";
+  writingArea.contentEditable = "true";
+  writingArea.focus();
+  writingArea.style.color = "#000";
+  writingArea.style.background = "#fff";
+  timeBar.style.width     = "100%";
+  timeBarContainer.style.opacity = "1";     // 타임 바 활성화 시 불투명하게 변경
+  timeBarContainer.classList.add("active"); // 타임 바 활성화 시 배경색 핑크색으로 변경
+  afterWritingOpts.style.display = "none";
+  retryPrompt.style.display      = "none";
+
+  writingTimeSelect.disabled = true;
+  startBtn.disabled          = true;
+  started = true;  elapsed = 0;
+
+  // --- 메인 타이머 ---
+  sessionTimer = setInterval(() => {
+    elapsed++;
+    const pct = ((duration - elapsed) / duration) * 100;
+    timeBar.style.width = pct + "%";
+    if (elapsed >= duration) endSession(true);   // 정상 종료
+  }, 1000);
+
+  writingArea.oninput = resetIdleTimer;
+  resetIdleTimer();            // 첫 입력 감시 시작
+};
+
+// ===== 입력 감시 =====
+function resetIdleTimer() {
+  clearTimeout(idleTimer);
+  clearInterval(warnInterval);
+
+  redIntensity = 0;
+  writingArea.style.color = "#000";
+  writingArea.style.background = "#fff";
+  writingArea.classList.remove("shake");
+
+  idleTimer = setTimeout(startWarning, 1000);   // 1초 후 경고 시작
+}
+
+function startWarning() {
+  let idleSec = 0;
+  warnInterval = setInterval(() => {
+    if (!started) return;
+
+    redIntensity = Math.min(redIntensity + 40, 255);
+    writingArea.style.color = `rgb(${redIntensity},0,0)`;
+    writingArea.style.background = `rgba(255,100,100,${(redIntensity/255).toFixed(2)})`;
+
+    writingArea.classList.add("shake");                  // 흔들
+    if (navigator.vibrate) navigator.vibrate(150);       // 모바일 진동
+
+    if (++idleSec >= 5) {            // 5초 초과 → 실패
+      endSession(false);
+    }
+  }, 1000);
+}
+
+// ===== 세션 종료 처리 =====
+function endSession(success) {
+  started = false;
+
+  // 타이머·경고 모두 정리
+  clearInterval(sessionTimer);
+  clearTimeout(idleTimer);
+  clearInterval(warnInterval);
+
+  // 시각 효과 원상 복귀
+  writingArea.classList.remove("shake");
+  writingArea.style.color = "#000";
+  writingArea.style.background = "#fff";
+  timeBar.style.width = "0%";
+  timeBarContainer.style.opacity = ".4";          // 타임 바 비활성화 시 투명하게
+  timeBarContainer.classList.remove("active");    // 타임 바 비활성화 시 다시 회색으로 초기화
+
+  // 편집 잠금
+  writingArea.contentEditable = "false";
+
+  // 버튼 재활성
+  writingTimeSelect.disabled = false;
+  startBtn.disabled          = false;
+
+  if (success) {                 // 정상 종료
+    afterWritingOpts.style.display = "block";
+    retryPrompt.style.display      = "none";
+  } else {                       // 입력 중단 실패
+    writingArea.innerHTML = "";
+    afterWritingOpts.style.display = "none";
+    retryPrompt.style.display      = "block";
+  }
+}
+
+// ===== 복사 / 공유 / 재시도 =====
+document.getElementById("copyBtn").onclick  = () =>
+  navigator.clipboard.writeText(writingArea.innerText)
+    .then(() => alert("Your text has been copied."))
+    .catch(() => alert("Failed to copy"));
+
+document.getElementById("shareBtn").onclick = () => {
+  const text = writingArea.innerText;
+  navigator.share ? navigator.share({ text }) :
+  alert("This browser does not support the sharing.");
+};
+</script>
+
+{% endblock %}

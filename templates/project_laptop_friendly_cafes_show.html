@@ -79,12 +79,13 @@
 			  <textarea name="comment_text" placeholder="write your comment" required
 						style="width: 300px; height: 80px; padding: 5px; resize: vertical;"></textarea>
 			  <!-- 버튼 -->
-			  <button type="submit" class="button primary small" style="margin-top: 5px; height: 34px;">submit</button>
+			  <button type="submit" class="button primary small" style="margin-top: 5px; height: 34px; line-height: 34px;">submit</button>
 		    </form>
 		  {% else %}
 		    <p><a href="{{ url_for('login') }}"><strong>Log In</strong></a> to leave the comments.</p>
 		  {% endif %}
 	    </div>
+
 	  </div>
     </div>
   </div>
