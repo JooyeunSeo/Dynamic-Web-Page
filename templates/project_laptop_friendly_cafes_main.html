@@ -4,7 +4,8 @@
 {% block content %}
 <div id="main">
   <div class="inner">
-	<h1 style="text-align: center; margin-top: 3%;">💻 Laptop Friendly Cafes ☕️ in {{ selected_city }}</h1>
+	<h1 style="text-align: center; margin-top: 3%; margin-bottom: 2%;">💻 Laptop Friendly Cafes ☕️<br></h1>
+    <h2 style="text-align: center;">in {{ selected_city }}</h2>
       <p style="text-align: center;">
         Log in to add a new cafe to the list or leave comments.<br>
         If the cafe has closed or contains incorrect information, please click the report button to let me know.
@@ -48,10 +49,10 @@
                          style="min-width: 120px; min-height: 110px; max-width: 150px; max-height: 140px; width: 100%; height: 100%; object-fit: cover; object-position: center; vertical-align: top;">
                   </td>
                   <td>
-                    <b>{{ cafe.name }}</b><br>
-                    <a href="{{ cafe.map_url }}" target="_blank">📍 {{ cafe.location }}</a><br>
+                    <a href="{{ url_for('laptop_friendly_cafes_show', cafe_id=cafe.id) }}"><b>{{ cafe.name }}</b></a><br>
+                    <a href="{{ cafe.map_url }}" target="_blank" style="border-bottom: none;">📍 {{ cafe.location }}</a><br>
                     📞 {{ cafe.phone_number }}<br>
-                    <a href="{{ url_for('laptop_friendly_cafes_show', cafe_id=cafe.id) }}">💬 {{ cafe.comments|length }} comments</a>
+                    💬 {{ cafe.comments|length }} comments
                   </td>
                   <td>{% if cafe.has_sockets %}<p>🔌</p>{% else %}<p>✘</p>{% endif %}</td>
                   <td>{% if cafe.has_toilet %}<p>🚽</p>{% else %}<p>✘</p>{% endif %}</td>
@@ -67,4 +68,5 @@
     </section>
   </div>
 </div>
+
 {% endblock %}
