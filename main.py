@@ -26,12 +26,12 @@ import smtplib                                      # 파이썬 코드로 이메
 from email.mime.multipart import MIMEMultipart      # 이메일의 본문과 제목 관리
 from email.mime.text import MIMEText                # UTF-8로 이메일의 본문 인코딩
 #--------------------------------------
-import project_morse_code as morse
-
-
+import project_morse_code as func_morse
+import project_color_picker as func_colorpicker
 #------------------------------------
 MY_EMAIL = os.environ.get("MY_EMAIL")
 GMAIL_PASSWORD = os.environ.get("GMAIL_PASSWORD")
+
 #--------------------
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.environ.get('FLASK_KEY')  #SQLAlchemy 설정 코드
@@ -232,7 +232,7 @@ def morse_code_converter():
     if request.method == "POST":                    # 폼에서 제출된 데이터 처리
         user_input = request.form.get('string')     # 사용자 입력값 가져오기
 
-        result = morse.str_to_morse(str(user_input))
+        result = func_morse.str_to_morse(str(user_input))
         # 변환 결과(result)와 입력값(user_input)을 URL 매개변수에 추가하여 GET 요청으로 리다이렉트
         return redirect(url_for('morse_code_converter', result=result, user_input=user_input))
 
@@ -477,6 +477,25 @@ def todo_list_delete(task_id):
 @app.route('/write_or_vanish', methods=["GET", "POST"])
 def write_or_vanish():
     return render_template('project_write_or_vanish.html', csrf_token=generate_csrf())
+
+###############################################################################################################
+@app.route('/color_picker', methods=["GET", "POST"])
+def color_picker():
+    if request.method == 'POST':
+        file = request.files.get('image')
+        filename = file.filename if file else ''
+        _, ext = os.path.splitext(filename)  # ('example', '.jpg')
+        if not file or ext.lower() not in {'.jpg', '.jpeg', '.png', '.gif', '.bmp'}:
+            return "Only JPG, PNG, GIF, BMP images are supported.", 400
+
+        image_data_url = func_colorpicker.convert_file_to_data_url(file)
+        top_colors = func_colorpicker.extract_top_colors(file, 10)
+        return render_template(
+            'project_color_picker.html',
+            top_colors=top_colors,
+            image_data=image_data_url,
+            csrf_token=generate_csrf())
+    return render_template('project_color_picker.html', top_colors=None, image_data=None, csrf_token=generate_csrf())
 
 ###############################################################################################################
 

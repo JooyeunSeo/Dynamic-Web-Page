@@ -143,10 +143,11 @@ let duration       = 0;
 
 // ===== 시작 버튼 =====
 startBtn.onclick = () => {
+  // 드롭다운에서 설정된 글쓰기 시간(초)을 가져옴
   duration = parseInt(writingTimeSelect.value);
   if (!duration) { alert("Set the writing time."); return; }
 
-  // --- UI/상태 초기화 ---
+  // UI 초기화: 이전 결과 숨김, 글쓰기 영역 초기화 및 포커스 설정
   writingArea.innerHTML  = "";
   writingArea.contentEditable = "true";
   writingArea.focus();
@@ -158,51 +159,61 @@ startBtn.onclick = () => {
   afterWritingOpts.style.display = "none";
   retryPrompt.style.display      = "none";
 
+  // 드롭다운과 버튼 비활성화 → 세션 도중 변경 방지
   writingTimeSelect.disabled = true;
   startBtn.disabled          = true;
   started = true;  elapsed = 0;
 
-  // --- 메인 타이머 ---
+  // --- 메인 타이머(1초 간격으로 경과 시간 계산 및 타임바 업데이트) ---
   sessionTimer = setInterval(() => {
+    // 경과 시간 1초 증가
     elapsed++;
+
+    // 남은 시간을 비율로 계산 (0%에 가까울수록 종료 직전)
     const pct = ((duration - elapsed) / duration) * 100;
     timeBar.style.width = pct + "%";
-    if (elapsed >= duration) endSession(true);   // 정상 종료
+
+    // 정해진 시간이 끝나면 성공으로 세션 종료
+    if (elapsed >= duration) endSession(true);
   }, 1000);
 
   writingArea.oninput = resetIdleTimer;
   resetIdleTimer();            // 첫 입력 감시 시작
 };
 
-// ===== 입력 감시 =====
+// ===== 입력 중단 감시 =====
 function resetIdleTimer() {
+  // 이전의 입력 중단 감지 타이머 및 경고 타이머 제거
   clearTimeout(idleTimer);
   clearInterval(warnInterval);
 
+  // 배경색 초기화
   redIntensity = 0;
-  writingArea.style.color = "#000";
   writingArea.style.background = "#fff";
   writingArea.classList.remove("shake");
 
-  idleTimer = setTimeout(startWarning, 1000);   // 1초 후 경고 시작
+  // 1초 동안 입력이 없으면 startWarning() 실행
+  idleTimer = setTimeout(startWarning, 1000);
 }
 
 function startWarning() {
-  let idleSec = 0;
+  let idleSec = 0;  // 입력이 멈춘 시간 (초 단위)
+
   warnInterval = setInterval(() => {
     if (!started) return;
 
+    / 배경색이 점점 붉어지며 경고 강화
     redIntensity = Math.min(redIntensity + 40, 255);
-    writingArea.style.color = `rgb(${redIntensity},0,0)`;
     writingArea.style.background = `rgba(255,100,100,${(redIntensity/255).toFixed(2)})`;
 
-    writingArea.classList.add("shake");                  // 흔들
-    if (navigator.vibrate) navigator.vibrate(150);       // 모바일 진동
+    writingArea.classList.add("shake");                  // 흔들림 효과 추가 (CSS 애니메이션)
+    if (navigator.vibrate) navigator.vibrate(150);       // 모바일 진동 기능 (지원 브라우저에 한함)
 
-    if (++idleSec >= 5) {            // 5초 초과 → 실패
+    // 5초 이상 입력이 없으면 실패로 간주하고 세션 종료
+    if (++idleSec >= 5) {
       endSession(false);
     }
-  }, 1000);
+  }, 1000);   // 매 1초마다 경고 상태 강화
 }
 
 // ===== 세션 종료 처리 =====
@@ -216,7 +227,6 @@ function endSession(success) {
 
   // 시각 효과 원상 복귀
   writingArea.classList.remove("shake");
-  writingArea.style.color = "#000";
   writingArea.style.background = "#fff";
   timeBar.style.width = "0%";
   timeBarContainer.style.opacity = ".4";          // 타임 바 비활성화 시 투명하게
@@ -239,7 +249,7 @@ function endSession(success) {
   }
 }
 
-// ===== 복사 / 공유 / 재시도 =====
+// ===== 복사 / 공유 버튼 =====
 document.getElementById("copyBtn").onclick  = () =>
   navigator.clipboard.writeText(writingArea.innerText)
     .then(() => alert("Your text has been copied."))

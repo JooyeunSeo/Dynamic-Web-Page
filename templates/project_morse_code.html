@@ -9,6 +9,7 @@
     <form method="post" id="morse">
       <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
       <div class="fields">
+
         <div class="field half">
           <label for="string">String:</label>
           <textarea name="string" id="string" spellcheck="false" inputmode="text"
@@ -18,6 +19,7 @@
           <button type="button" class="button small" onclick="resetForm()">Reset</button>
           <button type="submit" class="button primary small">Convert</button>
         </div>
+
         <div class="field half">
           <label>Morse Code:</label>
           <pre>{% if result is not none %}{{ result | safe }}{% endif %}</pre>

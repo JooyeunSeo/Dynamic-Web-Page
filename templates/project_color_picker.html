@@ -1,0 +1,138 @@
+{% extends 'base.html' %}
+{% block title %}Color Picker{% endblock %}
+
+{% block content %}
+<div id="main">
+  <div class="inner" style="text-align: center;">
+	<h1>Color Picker</h1>
+
+	  <!-- 이미지 업로드 폼 -->
+	  <form method="POST" enctype="multipart/form-data">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+        <input type="file" name="image" accept="image/*" required>
+        <button type="submit" class="button" id="startBtn" style="margin-top: 5px; height: 34px; line-height: 34px;">Upload</button>
+      </form>
+
+      <!-- 이미지 표시 -->
+      {% if image_data %}
+        <img src="{{ image_data }}" class="image-preview">
+        <hr>
+      {% else %}
+        <p>Upload your image</p>
+      {% endif %}
+
+      <!-- 추출된 색상 표시 -->
+	  {% if top_colors %}
+        <h2>Top 10 Colors:</h2>
+        <div class="color-list">
+          {% for color, ratio in top_colors %}
+            <div class="color-item">
+                <div class="left-group">
+                  <div class="color-box" style="background-color: {{ color }};"></div>
+                  <div><b>{{ color }}</b></div>
+                </div>
+                <div>({{ ratio }}%)</div>
+            </div>
+          {% endfor %}
+        </div>
+      {% endif %}
+  </div>
+</div>
+
+<style>
+.image-preview {
+  max-width: 400px;
+  margin-bottom: 10px;
+}
+
+.color-list {       /* 컬러 리스트 세로 배치 */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.color-item {       /* 각 컬러 아이템 박스 */
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 250px;         /* <-- 컬러박스+텍스트 고정 너비 */
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  background-color: #fff;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  transition: background-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.left-group {           /* 왼쪽 그룹: 칩 + 헥스 코드 */
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.color-box {            /* 컬러 박스 */
+  width: 30px;
+  height: 30px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.color-box:hover {
+  transform: scale(1.2);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+}
+
+#toast {
+  visibility: hidden;
+  min-width: 140px;
+  background-color: #333;
+  color: #fff;
+  text-align: center;
+  border-radius: 6px;
+  padding: 8px 12px;
+  position: fixed;
+  bottom: 30px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1000;
+  transition: visibility 0s, opacity 0.5s ease-in-out;
+  opacity: 0;
+  font-family: Arial, sans-serif;
+  font-size: 14px;
+}
+
+#toast.show {
+  visibility: visible;
+  opacity: 1;
+}
+</style>
+
+<div id="toast"></div>
+
+<script>
+function showToast(message) {
+  const toast = document.getElementById('toast');
+  toast.textContent = message;
+  toast.classList.add('show');
+  setTimeout(() => {
+    toast.classList.remove('show');
+  }, 2000); // 2초 후 사라짐
+}
+
+// 클릭 이벤트 리스너 - 왼쪽 그룹(색상칩 + 코드)에 추가
+document.querySelectorAll('.left-group').forEach(group => {
+  group.style.cursor = 'pointer'; // 마우스 커서 포인터로 변경
+  group.addEventListener('click', () => {
+    const colorText = group.querySelector('b').textContent.trim();    // b 태그로 헥스코드 찾기
+    navigator.clipboard.writeText(colorText).then(() => {
+      showToast(`Copied ${colorText} to clipboard!`);
+    }).catch(() => {
+      showToast('Failed to copy.');
+    });
+  });
+});
+</script>
+{% endblock %}

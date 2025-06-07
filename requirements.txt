@@ -3,9 +3,12 @@ gunicorn
 bootstrap-flask
 Flask-WTF
 wtforms
-email-validator
 SQLAlchemy
 flask_sqlalchemy
 psycopg2-binary
-Werkzeug
 Flask_Login
+Werkzeug
+email-validator
+Pillow
+numpy
+scikit-learn
