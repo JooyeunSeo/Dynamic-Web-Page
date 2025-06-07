@@ -8,7 +8,7 @@ from io import BytesIO
 
 def extract_top_colors(file_storage, num_colors=10):
     img = Image.open(file_storage).convert('RGB')
-    # img = img.resize((200, 200))  # 성능 최적화용(너무 작게하면 분산이 부족해지므로 적당히)
+    img.thumbnail((130, 130))  # 성능 최적화용(너무 작게하면 분산이 부족해지므로 적당히)
 
     # numpy 배열로 바꾼 이미지의 총 픽셀(행x열) 계산 후 픽셀마다 색상 부여 = (100, 200, 3) → (20000, 3)
     pixels = np.array(img).reshape(-1, 3)
