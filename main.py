@@ -486,15 +486,25 @@ def color_picker():
         filename = file.filename if file else ''
         _, ext = os.path.splitext(filename)  # ('example', '.jpg')
         if not file or ext.lower() not in {'.jpg', '.jpeg', '.png', '.gif', '.bmp'}:
-            return "Only JPG, PNG, GIF, BMP images are supported.", 400
+            flash("Only JPG, PNG, GIF, BMP images are supported.", "error")
+            return redirect(request.url)
 
-        image_data_url = func_colorpicker.convert_file_to_data_url(file)
-        top_colors = func_colorpicker.extract_top_colors(file, 10)
-        return render_template(
-            'project_color_picker.html',
-            top_colors=top_colors,
-            image_data=image_data_url,
-            csrf_token=generate_csrf())
+        try:
+            image_data_url = func_colorpicker.convert_file_to_data_url(file)
+            top_colors = func_colorpicker.extract_top_colors(file, 10)
+
+            if not top_colors:
+                flash("No valid colors could be extracted from the image.", "error")
+
+            return render_template(
+                'project_color_picker.html',
+                top_colors=top_colors,
+                image_data=image_data_url,
+                csrf_token=generate_csrf())
+        except Exception as e:
+            flash(f"Image processing failed: {str(e)}", "error")
+            return redirect(request.url)
+
     return render_template('project_color_picker.html', top_colors=None, image_data=None, csrf_token=generate_csrf())
 
 ###############################################################################################################

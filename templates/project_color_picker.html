@@ -13,12 +13,21 @@
         <button type="submit" class="button" id="startBtn" style="margin-top: 5px; height: 34px; line-height: 34px;">Upload</button>
       </form>
 
+      <!-- 이미지 오류 시 플래시 메세지 -->
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+          <div class="flash-messages">
+            {% for category, message in messages %}
+              <div class="alert {{ category }}">{{ message }}</div>
+            {% endfor %}
+          </div>
+        {% endif %}
+      {% endwith %}
+
       <!-- 이미지 표시 -->
       {% if image_data %}
         <img src="{{ image_data }}" class="image-preview">
         <hr>
-      {% else %}
-        <p>Upload your image</p>
       {% endif %}
 
       <!-- 추출된 색상 표시 -->
@@ -40,6 +49,22 @@
 </div>
 
 <style>
+.flash-messages {
+  margin-top: 10px;
+  text-align: center;
+}
+.alert {
+  padding: 10px 16px;
+  border-radius: 6px;
+  margin-bottom: 10px;
+  display: inline-block;
+}
+.alert.error {
+  background-color: #fdd;
+  color: #900;
+  border: 1px solid #f99;
+}
+
 .image-preview {
   max-width: 400px;
   margin-bottom: 10px;
