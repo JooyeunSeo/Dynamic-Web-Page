@@ -49,8 +49,9 @@ csrf = CSRFProtect(app)  # CSRF 보호 활성화
 if os.environ.get('FLASK_ENV') == 'development':    # 로컬 환경
     app.config['CACHE_TYPE'] = 'FileSystemCache'
     app.config['CACHE_DIR'] = 'cache(created)'
-else:
-    app.config['CACHE_TYPE'] = 'SimpleCache'        # 배포 환경(Flask-Caching 내장 메모리 캐시 사용)
+else:                                               # 배포 환경
+    app.config['CACHE_TYPE'] = 'FileSystemCache'
+    app.config['CACHE_DIR'] = '/tmp/cache'
 
 app.config['CACHE_DEFAULT_TIMEOUT'] = 3600      # default 1h(s)
 cache = Cache(app)
