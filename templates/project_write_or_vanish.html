@@ -202,7 +202,7 @@ function startWarning() {
   warnInterval = setInterval(() => {
     if (!started) return;
 
-    / 배경색이 점점 붉어지며 경고 강화
+    // 배경색이 점점 붉어지며 경고 강화
     redIntensity = Math.min(redIntensity + 40, 255);
     writingArea.style.background = `rgba(255,100,100,${(redIntensity/255).toFixed(2)})`;
 

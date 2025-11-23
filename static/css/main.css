@@ -2725,8 +2725,8 @@ input, select, textarea {
 				background-color: #ae85ca;
 			}
 
-			.tiles article.style6 > .image:before {     /* blue */
-				background-color: #8499e7;
+			.tiles article.style6 > .image:before {     /* green */
+				background-color: #008d62;
 			}
 
             .tiles article.style7 > .image:before {     /* skyblue */

@@ -10,6 +10,7 @@ from flask_bootstrap import Bootstrap5
 from forms import RegisterForm, LoginForm, TaskForm
 from flask_wtf.csrf import generate_csrf
 from flask_wtf import CSRFProtect
+from flask_caching import Cache
 #--------------------------------------
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.orm import DeclarativeBase
@@ -19,38 +20,53 @@ from flask_login import UserMixin, LoginManager, login_required, login_user, cur
 from werkzeug.security import generate_password_hash, check_password_hash
 #--------------------------------------
 import os
-from datetime import datetime, date
+import json
+from datetime import datetime, date, timedelta
 from zoneinfo import ZoneInfo
 # from functools import wraps                         # 데코레이터 생성 시 원래 함수의 메타데이터 유지
+import requests                                     # 외부 HTTP 요청 라이브러리
 import smtplib                                      # 파이썬 코드로 이메일을 전송하는 모듈
 from email.mime.multipart import MIMEMultipart      # 이메일의 본문과 제목 관리
 from email.mime.text import MIMEText                # UTF-8로 이메일의 본문 인코딩
-#--------------------------------------
+#----------------------------------------------
 import project_morse_code as func_morse
 import project_color_picker as func_colorpicker
-#------------------------------------
+import project_forex_time_machine as func_forex
+
+#-------------------------------------------------------------------
+API_URL_EXCHANGERATE = "https://api.exchangerate.host/"
+API_KEY_EXCHANGERATE = os.getenv("API_KEY_EXCHANGERATE")
+#-----------------------------------------------
 MY_EMAIL = os.environ.get("MY_EMAIL")
 GMAIL_PASSWORD = os.environ.get("GMAIL_PASSWORD")
-
-#--------------------
+#-------------------------------------------------------------------------
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.environ.get('FLASK_KEY')  #SQLAlchemy 설정 코드
-#--------------
+#---------------------------------------
 Bootstrap5(app)
 csrf = CSRFProtect(app)  # CSRF 보호 활성화
-#-----------------------------
+#------------------------------------------
+if os.environ.get('FLASK_ENV') == 'development':    # 로컬 환경
+    app.config['CACHE_TYPE'] = 'FileSystemCache'
+    app.config['CACHE_DIR'] = 'cache(created)'
+else:
+    app.config['CACHE_TYPE'] = 'SimpleCache'        # 배포 환경(Flask-Caching 내장 메모리 캐시 사용)
+
+app.config['CACHE_DEFAULT_TIMEOUT'] = 3600      # default 1h(s)
+cache = Cache(app)
+#-----------------------------------------------------------------------
 login_manager = LoginManager()      # 사용자 인증을 위해 LoginManager 객체 생성
 login_manager.init_app(app)         # Flask 애플리케이션에 LoginManager를 연결
 
 @login_manager.user_loader
 def load_user(user_id):
-    return User.query.get(int(user_id))
-
+    return db.session.get(User, int(user_id))   # old version: User.query.get(int(user_id))
 #------------------------------------------------------------------------------------
 class Base(DeclarativeBase):
     pass
 
-app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get("DB_URI", "sqlite:///users.db")  # 환경변수 DB_URI
+# 환경변수 DB_URI: 웹 호스팅 서비스용, instance/users.db(기본값): 로컬 테스트용
+app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get("DB_URI", "sqlite:///users.db")
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False    # 객체 상태 변화 추적 비활성화(메모리 절약)
 db = SQLAlchemy(model_class=Base)
 db.init_app(app)
@@ -508,10 +524,133 @@ def color_picker():
     return render_template('project_color_picker.html', top_colors=None, image_data=None, csrf_token=generate_csrf())
 
 ###############################################################################################################
+with open("data(created)/currencies.json", "r", encoding="utf-8") as f:
+    currencies = json.load(f)
 
+@cache.memoize(timeout=86400)  # 1일 TTL
+def timeframe_cache_or_get(from_currency, to_currency, start_date, end_date):
+    """1년치 환율데이터 API 요청(캐시에 값이 없거나 TTL이 만료된 상태일때만 함수 실행)"""
+    print(f"[CACHE MISS] API requests: {from_currency} -> {to_currency}, {start_date} ~ {end_date}")
+    resp = requests.get(f"{API_URL_EXCHANGERATE}/timeframe", params={
+        "access_key": API_KEY_EXCHANGERATE,
+        "source": from_currency,
+        "currencies": to_currency,
+        "start_date": start_date,
+        "end_date": end_date
+    }).json()
+    return resp
+
+@app.route('/forex_time_machine', methods=["GET", "POST"])
+def forex_time_machine():
+    today = datetime.now()                      # today's date
+    year_ago = (today - timedelta(days=366))    # a year ago
+
+    from_currency = None    # start currency
+    to_currency = None      # goal currency
+    amount = 0              # 0 from_currency
+    a_date = None           # Past day
+    b_date = None           # Recent Date
+    a_amount = None         # amount after exchanging (a_date)
+    b_amount = None         # amount after exchanging (b_date)
+    percent_change = None
+    fx_graph = None
+
+    if request.method == "POST":
+        from_currency = request.form.get("from_currency")
+        to_currency = request.form.get("to_currency")
+        amount = float(request.form.get("amount", 0).replace(",", ""))
+        a_date = request.form.get("a_date")
+        b_date = request.form.get("b_date")
+
+        # === a, b 날짜 검증 ===
+        a_date_obj = datetime.strptime(a_date, "%Y-%m-%d")  # string -> datetime 객체
+        b_date_obj = datetime.strptime(b_date, "%Y-%m-%d")
+        date_errors = []
+
+        if a_date_obj == b_date_obj:
+            date_errors.append("Past date and Recent date cannot be the same.")
+        if a_date_obj > b_date_obj:
+            date_errors.append("Past date must be earlier than Recent date.")
+        if a_date_obj < year_ago:
+            date_errors.append("Past date cannot be earlier than one year ago.")
+        if b_date_obj > today:
+            date_errors.append("Recent date cannot be in the future.")
+
+        if date_errors:
+            for e in date_errors:
+                flash(e, "error")
+            return render_template(
+                "project_forex_time_machine.html",
+                currencies=currencies,
+                from_currency=from_currency,
+                to_currency=to_currency,
+                amount=amount,
+                a_date=None,
+                b_date=None,
+                a_amount=None,
+                b_amount=None,
+                percent_change=None,
+                fx_graph=None,
+                csrf_token=generate_csrf()
+            )
+
+        # === API 데이터 요청 ===
+        resp_timeframe = timeframe_cache_or_get(
+            from_currency,
+            to_currency,
+            year_ago.strftime("%Y-%m-%d"),
+            today.strftime("%Y-%m-%d")
+        )
+
+        # === 그래프 데이터 파싱 ===
+        graph_rate = []
+        graph_quotes = resp_timeframe.get("quotes", {})
+
+        for date, info in sorted(graph_quotes.items()):
+            if not info:
+                continue
+            value = list(info.values())[0]  # 정방향
+            inversed_value = 1 / value      # 역방향 계산
+            graph_rate.append({"date": date, "value": inversed_value})
+            # === 날짜 a, b의 환전 금액 계산 ===
+            if date == a_date:
+                a_amount = amount * value
+            if date == b_date:
+                b_amount = amount * value
+
+        # 과거 대비 현재
+        if a_amount is not None and b_amount is not None:
+            percent_change = ((b_amount - a_amount) / a_amount) * 100
+
+        # === 그래프 생성 ===
+        if graph_rate:
+            fx_graph = func_forex.create_exchange_graph(
+                dates=[item["date"] for item in graph_rate],
+                rates=[item["value"] for item in graph_rate],
+                title=f"1 Year Rate Trend (1 {to_currency} ➞ _ {from_currency})",
+                past_date=a_date,
+                recent_date=b_date
+            )
+
+    return render_template(
+        "project_forex_time_machine.html",
+        currencies=currencies,
+        from_currency=from_currency,
+        to_currency=to_currency,
+        amount=amount,
+        a_date=a_date,
+        b_date=b_date,
+        a_amount=a_amount,
+        b_amount=b_amount,
+        percent_change=percent_change,
+        fx_graph=fx_graph,
+        csrf_token=generate_csrf()
+    )
 
 
 # Server -------------------------------------
 if __name__ == "__main__":
-    app.run(debug=False)                                # ☁️ git에 commit할 때
-    # app.run(debug=True, host="127.0.0.1", port=5001)    # 💻 local에서 실행할 때 → 403 에러 시 포트 5000에서 5001로 변경
+    if os.environ.get("FLASK_ENV") == "development":
+        app.run(debug=True, host="127.0.0.1", port=5001)    # 💻 로컬 환경(403 에러 시 포트 5000에서 5001로 변경)
+    else:
+        app.run(debug=False)                                # ☁️ 배포 환경

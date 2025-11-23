@@ -7,8 +7,11 @@ SQLAlchemy
 flask_sqlalchemy
 psycopg2-binary
 Flask_Login
+Flask-Caching
 Werkzeug
 email-validator
+scikit-learn
+requests
 Pillow
 numpy
-scikit-learn
+plotly

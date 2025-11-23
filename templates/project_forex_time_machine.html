@@ -1,0 +1,206 @@
+{% extends 'base.html' %}
+{% block title %}Smart Exchange Calculator{% endblock %}
+
+{% block content %}
+<div class="container">
+
+  <h1 class="title" style="margin-bottom: 20px;">ForEx Time Machine</h1>
+  <p style="margin-bottom: 5px; font-size: 1rem;">
+    Explore how exchange rates have changed between a past date and today.
+  </p>
+  <ul style="font-size: 1rem;">
+    <li>Access exchange rate data from one year ago up to the present.</li>
+    <li>See how your selected past date compares to today in conversion results.</li>
+    <li>Visualize the 1 year trend with your chosen period highlighted on the graph.</li>
+  </ul>
+  <p style="font-size: 1rem;">
+    ⚠️ Please note that this service uses the free API from <a href="https://exchangerate.host/">exchangerate.host</a>, which allows a maximum of 100 requests per month. If the service does not respond, I appreciate your understanding.
+  </p>
+  <hr>
+
+  <form method="POST" class="form-box">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+
+    <!-- === 통화 선택 === -->
+    <div class="row">
+      <div class="col">
+        <label>Your Currency</label>
+        <select name="from_currency" required>
+          {% for code, cur in currencies.items() %}
+            <option value="{{ code }}" {% if from_currency == code %}selected{% endif %}>
+              {{ cur.flag }} {{ code }} - {{ cur.name }}
+            </option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="col">
+        <label>Target Currency</label>
+        <select name="to_currency" required>
+          {% for code, cur in currencies.items() %}
+            <option value="{{ code }}" {% if to_currency == code %}selected{% endif %}>
+              {{ cur.flag }} {{ code }} - {{ cur.name }}
+            </option>
+          {% endfor %}
+        </select>
+      </div>
+    </div>
+
+    <!-- === 금액 입력 === -->
+    <div class="row">
+      <div class="col">
+        <label style="margin-top: 7px; margin-bottom: 5px;">Amount</label>
+        <input type="text" id="amount-input" name="amount" value="{{ amount if amount else '' }}" required>
+      </div>
+    </div>
+
+    <!-- === 날짜 선택 === -->
+    <div class="row">
+      <div class="col">
+        <label>Past Date</label>
+        <input type="date" name="a_date" value="{{ a_date }}" min="{{ year_ago }}" max="{{ today }}" required>
+      </div>
+
+      <div class="col">
+        <label>Recent Date</label>
+        <input type="date" name="b_date" value="{{ b_date }}" min="{{ year_ago }}" max="{{ today }}" required>
+      </div>
+    </div>
+
+    <!-- === Flash 메시지 표시 === -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <div class="flash-messages" style="text-align:center; margin:10px 0;">
+          {% for category, message in messages %}
+            <span class="flash {{ category }}">{{ message }}</span>
+            <br>
+          {% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
+
+    <button class="button primary" type="submit" style="width: 100%; margin-top: 10px;">Exchange & Compare</button>
+  </form>
+
+  <!-- === 결과 표시 === -->
+  {% if a_amount and b_amount %}
+  <div class="result-box">
+    <div class="result-row">
+      <div class="result-col">
+        <h2>{{ a_date }}</h2>
+        <p><b>{{ "{:,.2f}".format(a_amount|float) }}</b> {{ to_currency }}</p>
+      </div>
+
+      <div class="result-col">
+        <h2>{{ b_date }}</h2>
+        <p><b>{{ "{:,.2f}".format(b_amount|float) }}</b> {{ to_currency }}</p>
+      </div>
+    </div>
+
+    <!-- 변화율 -->
+    <div class="change-box">
+      {% if percent_change %}
+        {% if percent_change > 0 %}
+          <p class="change up">▲ {{ percent_change|round(2) }}% (Increase)</p>
+        {% elif percent_change < 0 %}
+          <p class="change down">▼ {{ percent_change|round(2) }}% (Decrease)</p>
+        {% else %}
+          <p class="change neutral">— 0% (No Change)</p>
+        {% endif %}
+      {% else %}
+        <p class="change neutral">— N/A</p>
+      {% endif %}
+    </div>
+
+  </div>
+  {% endif %}
+</div>
+
+<!-- === 📈그래프 출력 === -->
+<script src="https://cdn.plot.ly/plotly-latest.min.js"></script>    <!-- Plotly JS -->
+{% if fx_graph %}
+  <div class="graph-container">
+    {{ fx_graph|safe }}
+  </div>
+{% endif %}
+
+<!-- === 🌈 JS/CSS === -->
+{% block page_scripts %}
+  <script>
+  $(function() {
+      $('select').select2();
+  });
+  </script>
+
+  <script>
+  // amount 입력
+  const amountInput = document.getElementById('amount-input');
+
+  amountInput.addEventListener('input', (e) => {
+      let value = e.target.value;
+
+      // 숫자와 소수점만 허용
+      value = value.replace(/[^0-9.]/g, '');
+
+      // 소수점 여러 개 방지
+      const parts = value.split('.');
+      if (parts.length > 2) {
+          value = parts[0] + '.' + parts.slice(1).join('');
+      }
+
+      // 정수 부분만 3자리마다 ',' 적용
+      let [integerPart, decimalPart] = value.split('.');
+      if (integerPart) {
+          // 소수점이 있을 때만 정수 부분 포맷
+          integerPart = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+      }
+
+      e.target.value = decimalPart !== undefined ? `${integerPart}.${decimalPart}` : integerPart;
+  });
+  </script>
+
+  <style>
+    .container { max-width: 800px; margin: auto; padding: 20px; }
+    .row { display: flex; gap: 5px; margin-bottom: 10px; }
+    .col { flex: 1; display: flex; flex-direction: column; }
+    .graph-container { margin: 10 auto; max-width: 100%; padding: 0 20px; box-sizing: border-box; }
+    .result-box { margin-top: 15px; padding: 30px; border: 1px solid #e5e5e5; border-radius: 10px; font-size: 1.1rem; }
+    .result-row { display: flex; justify-content: space-between; }
+    .result-col { text-align: center; width: 45%; }
+    .change-box { text-align: center; margin-top: 15px; font-weight: bold; font-size: 1.2rem; }
+    .change-box p { margin: 0; line-height: 1.2; }
+    .change.up { color: #d9534f; }
+    .change.down { color: #0275d8; }
+    .change.neutral { color: #666; }
+    .button.primary:hover { background-color: #4e8ff6; cursor: pointer; }
+    .flash.error { color: red; font-size: 0.9rem; font-weight: bold; }
+    .select2-container { width: 100% !important; }
+    .select2-container .select2-selection--single { height: 44px; border-radius: 8px; display: flex; align-items: center; }
+    input[type="text"]:focus { border-bottom-color: #aaaaaa; box-shadow: inset 0 -1px 0 0 #4e8ff6; }    /* 클릭/포커스 시 */
+    input[type="date"] {
+      appearance: none;           /* 브라우저 기본 스타일 제거 */
+      -webkit-appearance: none;
+      -moz-appearance: none;
+      border: 1px solid #aaaaaa;
+      border-radius: 6px;
+      padding: 8px 10px;
+      font-size: 1rem;
+      background-color: #fff;
+    }
+    input[type="date"]:focus { outline: none; border-color: #4e8ff6; }
+    @media(max-width: 600px) {
+      .result-row {
+        flex-direction: row;      /* 가로 유지 */
+        gap: 10px;
+        flex-wrap: wrap;          /* 필요하면 줄바꿈 */
+      }
+      .result-col {
+        flex: 1 1 45%;            /* 최소 45% 너비, 화면에 맞춰 조정 */
+        text-align: center;
+      }
+    }
+
+  </style>
+{% endblock %}
+
+{% endblock %}
