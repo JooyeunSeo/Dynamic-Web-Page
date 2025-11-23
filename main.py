@@ -652,6 +652,6 @@ def forex_time_machine():
 # Server -------------------------------------
 if __name__ == "__main__":
     if os.environ.get("FLASK_ENV") == "development":
-        app.run(debug=True, host="127.0.0.1", port=5001)    # 💻 로컬 환경(403 에러 시 포트 5000에서 5001로 변경)
+        app.run(debug=True, host="127.0.0.1", port=5000)    # 💻 로컬 환경(403 에러 시 포트 5000에서 5001로 변경)
     else:
         app.run(debug=False)                                # ☁️ 배포 환경
