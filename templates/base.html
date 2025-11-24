@@ -9,10 +9,13 @@
 		<title>{% block title %}Yon's Portfolio{% endblock %}</title>     <!-- 자식 페이지에서 브라우저 탭 이름 동적 설정 -->
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+        <!-- CSS -->
 		<link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}" />
 		<noscript><link rel="stylesheet" href="{{ url_for('static', filename='css/noscript.css') }}" /></noscript>
-        <script src="https://cdn.plot.ly/plotly-2.29.2.min.js"></script>    <!-- Plotly JS -->
-        <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />   <!-- Select2 CSS -->
+        <!-- Select2 CSS -->
+        <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+        <!-- Favicon -->
+        <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}" type="image/x-icon">
 	</head>
 	<body class="is-preload">
 		<!-- Wrapper -->
@@ -84,12 +87,16 @@
 			</div>
 
 		    <!----------------------------------------- JS 라이브러리 로드 ------------------------------------------>
-			<script src="{{ url_for('static', filename='js/jquery.min.js') }}"></script>
+
+            <script src="{{ url_for('static', filename='js/jquery.min.js') }}"></script>        <!-- 로컬 jQuery -->
+
+            <!-- 외부 CDN 라이브러리: jQuery보다 아래, main.js보다 위 -->
             <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>  <!-- Select2 JS -->
-			<script src="{{ url_for('static', filename='js/browser.min.js') }}"></script>
-			<script src="{{ url_for('static', filename='js/breakpoints.min.js') }}"></script>
-			<script src="{{ url_for('static', filename='js/util.js') }}"></script>
-			<script src="{{ url_for('static', filename='js/main.js') }}"></script>
+
+			<script src="{{ url_for('static', filename='js/browser.min.js') }}"></script>       <!-- 브라우저 호환성 체크 -->
+			<script src="{{ url_for('static', filename='js/breakpoints.min.js') }}"></script>   <!-- 반응형 웹 처리 -->
+			<script src="{{ url_for('static', filename='js/util.js') }}"></script>              <!-- 공용 유틸리티 함수 -->
+			<script src="{{ url_for('static', filename='js/main.js') }}"></script>              <!-- 템플릿의 핵심 JS 로직 -->
 
             <!-- 선택적 JS/CSS 적용 블록 -->
             {% block page_scripts %}{% endblock %}

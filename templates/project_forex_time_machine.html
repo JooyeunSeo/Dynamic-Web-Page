@@ -118,12 +118,15 @@
 
 <!-- === 📈그래프 출력 === -->
 {% if fx_graph %}
+<script src="https://cdn.plot.ly/plotly-2.32.0.min.js"></script>    <!-- Plotly JS -->
   <div class="graph-container">
     {{ fx_graph|safe }}
   </div>
 {% endif %}
 
 <!-- === 🌈 JS/CSS === -->
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script> <!-- Select2 JS -->
+
 {% block page_scripts %}
   <script>
   $(function() {
@@ -132,30 +135,42 @@
   </script>
 
   <script>
-  // amount 입력
-  const amountInput = document.getElementById('amount-input');
+  /*
+    금액 입력 필드(amount-input) 자동 포맷 스크립트
+    - 숫자와 소수점만 허용
+    - 정수 부분은 3자리마다 ',' 추가
+    - 중복 선언 방지 (템플릿이 여러 번 렌더링 되어도 오류 방지)
+  */
 
-  amountInput.addEventListener('input', (e) => {
-      let value = e.target.value;
+  if (!window.amountInput) {  // 이미 선언된 amountInput가 없으면 실행
+      const amountInput = document.getElementById('amount-input');  // 입력 필드 선택
+      window.amountInput = amountInput;  // 전역(window)에 저장하여 중복 선언 방지
 
-      // 숫자와 소수점만 허용
-      value = value.replace(/[^0-9.]/g, '');
+      // 입력 이벤트 리스너
+      amountInput.addEventListener('input', (e) => {
+          let value = e.target.value;
 
-      // 소수점 여러 개 방지
-      const parts = value.split('.');
-      if (parts.length > 2) {
-          value = parts[0] + '.' + parts.slice(1).join('');
-      }
+          // 숫자와 소수점(.)만 허용, 나머지 문자 제거
+          value = value.replace(/[^0-9.]/g, '');
 
-      // 정수 부분만 3자리마다 ',' 적용
-      let [integerPart, decimalPart] = value.split('.');
-      if (integerPart) {
-          // 소수점이 있을 때만 정수 부분 포맷
-          integerPart = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-      }
+          // 소수점이 여러 개 있으면 첫 번째만 남기고 제거
+          const parts = value.split('.');
+          if (parts.length > 2) {
+              value = parts[0] + '.' + parts.slice(1).join('');
+          }
 
-      e.target.value = decimalPart !== undefined ? `${integerPart}.${decimalPart}` : integerPart;
-  });
+          // 정수와 소수 분리
+          let [integerPart, decimalPart] = value.split('.');
+
+          // 정수 부분 3자리마다 ',' 추가
+          if (integerPart) {
+              integerPart = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+          }
+
+          // 다시 합쳐서 입력 필드 값 갱신
+          e.target.value = decimalPart !== undefined ? `${integerPart}.${decimalPart}` : integerPart;
+      });
+  }
   </script>
 
   <style>
