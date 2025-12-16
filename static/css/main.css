@@ -2713,20 +2713,20 @@ input, select, textarea {
 				background-color: #ab7d57;
 			}
 
-			.tiles article.style3 > .image:before {     /* yellow */
-				background-color: #fae978;
-			}
-
-			.tiles article.style4 > .image:before {     /* red */
+			.tiles article.style3 > .image:before {     /* red */
 				background-color: #ff3f3f;
 			}
 
-			.tiles article.style5 > .image:before {     /* purple */
+			.tiles article.style4 > .image:before {     /* purple */
 				background-color: #ae85ca;
 			}
 
-			.tiles article.style6 > .image:before {     /* green */
+			.tiles article.style5 > .image:before {     /* green */
 				background-color: #008d62;
+			}
+
+            .tiles article.style6 > .image:before {     /* yellow */
+				background-color: #fae978;
 			}
 
             .tiles article.style7 > .image:before {     /* skyblue */

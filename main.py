@@ -21,8 +21,9 @@ from werkzeug.security import generate_password_hash, check_password_hash
 #--------------------------------------
 import os
 import json
-from datetime import datetime, date, timedelta
+import pytz
 from zoneinfo import ZoneInfo
+from datetime import datetime, date, timedelta
 # from functools import wraps                         # 데코레이터 생성 시 원래 함수의 메타데이터 유지
 import requests                                     # 외부 HTTP 요청 라이브러리
 import smtplib                                      # 파이썬 코드로 이메일을 전송하는 모듈
@@ -374,18 +375,17 @@ def todo_list_home():
     task_form = TaskForm()
 
     user_tz_name = session.get('timezone', 'UTC')           # 세션에서 시간대 정보 가져와서 저장(없으면 기본 UTC)
-    print(f"세션에 저장된 시간대 확인: {user_tz_name}")  # 사용자 시간대 확인용
-    user_tz = ZoneInfo(user_tz_name)                        # zoneinfo 사용하여 시간대 객체 생성
+    print(f"🐞 세션에 저장된 시간대: {user_tz_name}")            # 사용자 시간대 확인용 (예: Asia/Tokyo)
+    user_tz = pytz.timezone(user_tz_name)
 
+    # POST (new task 저장)
     if current_user.is_authenticated and task_form.validate_on_submit():
-        due_date = task_form.due_date.data
+        due_date = task_form.due_date.data                  # 브라우저에서 들어온 naive datetime
         if due_date:
-            # 브라우저에서 보낸 datetime은 naive한 로컬 시간으로 들어오므로 실제로는 user_tz 기준이라고 간주하여 시간대 지정
-            localized_due_date = due_date.replace(tzinfo=user_tz)
-            # 이후 UTC로 변환해 저장
-            utc_due_date = localized_due_date.astimezone(ZoneInfo("UTC"))
+            local_due = user_tz.localize(due_date)          # 사용자 timezone aware datetime으로 변환
+            utc_due_date = local_due.astimezone(pytz.UTC)   # UTC로 변환
         else:
-            utc_due_date = None     # 마감일 없는 할 일
+            utc_due_date = None
 
         new_task = Task(
             text=task_form.text.data,
@@ -397,23 +397,34 @@ def todo_list_home():
         db.session.commit()
         return redirect(url_for('todo_list_home'))
 
-    # GET 요청
+    # GET (리스트 표시)
     if current_user.is_authenticated:
         user_tasks = Task.query.filter_by(tasker_id=current_user.id).order_by(Task.order).all()
 
-        # 각 task의 due_date를 로컬 시간으로 변환
-        for task in user_tasks:
-            if task.due_date:
-                task.local_due_date = task.due_date.astimezone(user_tz)
-            else:
-                task.local_due_date = None
-
-        # 현재 시간 (사용자 시간대 기준)
+        # 사용자 시간대 기준 현재 시간
         now = datetime.now(user_tz)
-        # 리스트 생성 (로컬 시간 기준으로 필터링)
-        pending_tasks = [t for t in user_tasks if not t.is_done and (t.local_due_date is None or t.local_due_date >= now)]
-        completed_tasks = [t for t in user_tasks if t.is_done]
-        overdue_tasks = [t for t in user_tasks if not t.is_done and t.local_due_date and t.local_due_date < now]
+
+        # DB에 저장된 UTC(naive datetime) → UTC로 재해석 → 로컬 시간으로 변환
+        for t in user_tasks:
+            if t.due_date:
+                utc_due = pytz.UTC.localize(t.due_date)  # DB에서 가져오면 tz가 사라진 naive datetime이므로 "이 값은 UTC다"라고 강제로 붙여줌
+                t.local_due_date = utc_due.astimezone(user_tz)  # 그 후 사용자 timezone으로 변환
+            else:
+                t.local_due_date = None
+
+        # 리스트 필터링 (로컬 시간 기준)
+        pending_tasks = [
+            t for t in user_tasks
+            if not t.is_done and (t.local_due_date is None or t.local_due_date >= now)
+        ]
+        completed_tasks = [
+            t for t in user_tasks
+            if t.is_done
+        ]
+        overdue_tasks = [
+            t for t in user_tasks
+            if not t.is_done and t.local_due_date is not None and t.local_due_date < now
+        ]
     else:
         now = None
         pending_tasks = []
@@ -427,10 +438,18 @@ def todo_list_home():
 
 @app.route('/todo_list/reorder_tasks', methods=["POST"])
 def todo_list_reorder_tasks():
-    order = request.json.get('order', [])
+    data = request.json
+
+    # data가 딕셔너리면 'order' 키에서 가져오고, 리스트면 그대로 사용
+    if isinstance(data, dict):
+        order = data.get('order', [])
+    elif isinstance(data, list):
+        order = data
+
+    # 순서대로 task 순서 업데이트
     for idx, task_id in enumerate(order):
-        task = Task.query.get(int(task_id))
-        if task and task.tasker == current_user:
+        task = Task.query.get(int(task_id))         # task_id로 데이터베이스에서 Task 객체 가져오기
+        if task and task.tasker == current_user:    # task가 존재하고 현재 사용자의 task이면 순서(order) 업데이트
             task.order = idx
     db.session.commit()
     return jsonify(success=True)
@@ -444,17 +463,15 @@ def todo_list_update_due_date(task_id):
 
     # 세션에서 사용자 시간대 가져오기
     user_tz_name = session.get('timezone', 'UTC')
-    user_tz = ZoneInfo(user_tz_name)
+    user_tz = pytz.timezone(user_tz_name)
 
     new_due = request.form.get('due_date')
     if new_due:
-        # naive datetime으로 들어오므로, 사용자 시간대로 간주해 tz 부여
-        naive_due = datetime.fromisoformat(new_due)
-        localized_due = naive_due.replace(tzinfo=user_tz)
-        # UTC로 변환해 저장
-        task.due_date = localized_due.astimezone(ZoneInfo("UTC"))
+        naive_due = datetime.fromisoformat(new_due)         # 브라우저에서 받은 naive datetime
+        local_due = user_tz.localize(naive_due)             # 사용자의 로컬 시간대로 tz-aware datetime 생성
+        task.due_date = local_due.astimezone(pytz.UTC)      # UTC로 변환 후 저장
     else:
-        task.due_date = None  # "기한 없음"으로 처리
+        task.due_date = None                                # "기한 없음"으로 처리
 
     db.session.commit()
     return redirect(request.referrer or url_for('todo_list_home'))
@@ -652,6 +669,6 @@ def forex_time_machine():
 # Server -------------------------------------
 if __name__ == "__main__":
     if os.environ.get("FLASK_ENV") == "development":
-        app.run(debug=True, host="127.0.0.1", port=5000)    # 💻 로컬 환경(403 에러 시 포트 5000에서 5001로 변경)
+        app.run(debug=True, host="127.0.0.1", port=5001)    # 💻 로컬 환경(403 에러 시 포트 5000에서 5001로 변경)
     else:
         app.run(debug=False)                                # ☁️ 배포 환경
